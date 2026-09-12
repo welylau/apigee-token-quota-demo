@@ -1,0 +1,16 @@
+{
+  "name": "Gemini-Premium-Network-Wireless-App",
+  "apiProducts": [
+    "Gemini-Gold-Tier"
+  ],
+  "attributes": [
+    {
+      "name": "Department",
+      "value": "Network"
+    },
+    {
+      "name": "Sub Department",
+      "value": "Wireless division"
+    }
+  ]
+}

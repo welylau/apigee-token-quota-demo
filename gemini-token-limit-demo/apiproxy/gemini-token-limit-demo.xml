@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<APIProxy revision="1" name="gemini-token-limit-demo">
+    <Basepaths>/gemini-token-limit-demo</Basepaths>
+    <ConfigurationVersion majorVersion="4" minorVersion="0"/>
+    <DisplayName>gemini-token-limit-demo</DisplayName>
+    <Description>Apigee proxy routing to Gemini Flash 2.5 Lite in asia-southeast1 with VerifyAPIKey, LLMTokenQuota, and AI Data Collectors</Description>
+    <Policies>
+        <Policy>AM-Extract-APIKey</Policy>
+        <Policy>VerifyAPIKey</Policy>
+        <Policy>LLMTokenQuota-Enforce</Policy>
+        <Policy>LLMTokenQuota-Count</Policy>
+        <Policy>AM-Prepare-Gemini-Request</Policy>
+        <Policy>JS-ExtractAiTokens</Policy>
+        <Policy>DC-AiTelemetry</Policy>
+        <Policy>AM-Set-Unauthorized-Response</Policy>
+        <Policy>AM-Set-Quota-Violation-Response</Policy>
+        <Policy>AM-Set-Internal-Error-Response</Policy>
+    </Policies>
+    <ProxyEndpoints>
+        <ProxyEndpoint>default</ProxyEndpoint>
+    </ProxyEndpoints>
+    <Resources>
+        <Resource>jsc://ExtractAiTokens.js</Resource>
+    </Resources>
+    <TargetEndpoints>
+        <TargetEndpoint>default</TargetEndpoint>
+    </TargetEndpoints>
+</APIProxy>

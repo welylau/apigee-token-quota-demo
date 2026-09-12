@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ProxyEndpoint name="default">
+    <PreFlow name="PreFlow">
+        <Request>
+            <Step>
+                <Name>AM-Extract-APIKey</Name>
+                <Condition>request.header.x-api-key == null</Condition>
+            </Step>
+            <Step>
+                <Name>VerifyAPIKey</Name>
+            </Step>
+            <Step>
+                <Name>LLMTokenQuota-Enforce</Name>
+            </Step>
+        </Request>
+        <Response>
+            <Step>
+                <Name>LLMTokenQuota-Count</Name>
+                <Condition>response.status.code = 200</Condition>
+            </Step>
+        </Response>
+    </PreFlow>
+    <Flows/>
+    <PostFlow name="PostFlow">
+        <Request/>
+        <Response>
+            <Step>
+                <Name>JS-ExtractAiTokens</Name>
+                <Condition>response.status.code = 200</Condition>
+            </Step>
+            <Step>
+                <Name>DC-AiTelemetry</Name>
+                <Condition>response.status.code = 200</Condition>
+            </Step>
+        </Response>
+    </PostFlow>
+    <FaultRules>
+        <FaultRule name="ApiKeyFaults">
+            <Condition>fault.name = "InvalidApiKey" or fault.name = "FailedToResolveAPIKey"</Condition>
+            <Step>
+                <Name>AM-Set-Unauthorized-Response</Name>
+            </Step>
+        </FaultRule>
+        <FaultRule name="QuotaFaults">
+            <Condition>fault.name = "LLMTokenQuotaViolation" or fault.name = "QuotaViolation"</Condition>
+            <Step>
+                <Name>AM-Set-Quota-Violation-Response</Name>
+            </Step>
+        </FaultRule>
+    </FaultRules>
+    <DefaultFaultRule name="DefaultFaultRule">
+        <Step>
+            <Name>AM-Set-Internal-Error-Response</Name>
+        </Step>
+    </DefaultFaultRule>
+    <HTTPProxyConnection>
+        <BasePath>/gemini-token-limit-demo</BasePath>
+    </HTTPProxyConnection>
+    <RouteRule name="default">
+        <TargetEndpoint>default</TargetEndpoint>
+    </RouteRule>
+</ProxyEndpoint>

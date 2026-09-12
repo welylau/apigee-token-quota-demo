@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apigee X — LLM Token Quota & AI Governance</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+  
+  <!-- Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- TOP HEADER: Google Cloud & Apigee X Logos -->
+    <header class="app-header">
+      <div class="brand-section">
+        <!-- Google Cloud Platform + Apigee X Logos -->
+        <div class="cloud-logos-wrapper">
+          <!-- Official Google Cloud Logo -->
+          <div class="logo-item" title="Google Cloud Platform">
+            <img src="assets/google-cloud.png" alt="Google Cloud" class="gcp-logo-img">
+            <span class="gcp-name">Google Cloud</span>
+          </div>
+
+          <div class="brand-divider"></div>
+
+          <!-- Official Apigee API Management Platform SVG Logo -->
+          <div class="logo-item apigee-brand" title="Apigee API Management Platform">
+            <svg class="apigee-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 81 82" width="24" height="24" fill="#fff" fill-rule="evenodd" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
+              <use xlink:href="#ApigeeLogoMark" x=".5" y=".5"/>
+              <symbol id="ApigeeLogoMark" overflow="visible">
+                <g stroke="none">
+                  <path d="M13.042 40l5.233-5.233-7.096-7.096c-3.281-3.341-4.244-8.32-2.446-12.644s6.009-7.15 10.692-7.178c3.08-.001 6.033 1.226 8.206 3.409l7.136 7.096L40 13.042l-7.096-7.096A19.07 19.07 0 0 0 14.296.608 19.07 19.07 0 0 0 .608 14.296a19.07 19.07 0 0 0 5.338 18.608zm53.916 0l-5.233 5.233 7.096 7.136a11.66 11.66 0 0 1-16.492 16.452l-7.096-7.096L40 66.958l7.096 7.096a19.07 19.07 0 1 0 26.958-26.958z" fill="#669df6"/>
+                  <path d="M27.671 68.821c-4.554 4.554-11.938 4.554-16.492 0s-4.554-11.938 0-16.492l7.096-7.096 16.492 16.492zm24.698-57.642c3.327-3.321 8.328-4.31 12.668-2.504s7.164 6.049 7.154 10.75c-.023 3.087-1.246 6.044-3.409 8.246l-7.096 7.096-16.452-16.492zM40 52.646A12.69 12.69 0 0 1 27.354 40h0A12.73 12.73 0 0 1 40 27.354h0A12.73 12.73 0 0 1 52.646 40h0A12.69 12.69 0 0 1 40 52.646zM66.958 40l7.096-7.096A19.07 19.07 0 0 0 65.704.608a19.07 19.07 0 0 0-18.608 5.338L40 13.042 13.042 40l-7.096 7.096A19.07 19.07 0 0 0 .608 65.704a19.07 19.07 0 0 0 32.296 8.35L40 66.958z" fill="#4285f4"/>
+                </g>
+              </symbol>
+            </svg>
+            <span class="apigee-name">Apigee <strong class="x-accent">X</strong></span>
+          </div>
+        </div>
+
+        <div class="brand-divider"></div>
+
+        <div class="brand-title-area">
+          <div class="brand-title">
+            <span>LLM Token Quota & AI Governance</span>
+            <span class="brand-badge">Vertex AI</span>
+          </div>
+          <span class="brand-subtitle">Gemini 2.5 Flash • Multi-tier Token Limiting & Telemetry</span>
+        </div>
+      </div>
+
+      <!-- Architecture tags & Quick info -->
+      <div class="arch-tags">
+        <div class="arch-pill" id="archInfoBtn" title="Click to view Apigee Quota architecture">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span>LLM Token Quota Policy</span>
+        </div>
+        <div class="arch-pill" title="Target Apigee Environment">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <span><strong id="header-org">YOUR_APIGEE_ORG</strong> • <strong id="header-env">default-dev</strong></span>
+        </div>
+        <div class="arch-pill" title="Model & Region">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+          <span>gemini-2.5-flash (asia-southeast1)</span>
+        </div>
+      </div>
+
+      <!-- Tab Switcher, Status & Theme Toggle -->
+      <div class="header-actions">
+        <div class="role-switcher-container" title="Switch view between Simulator and Admin Analytics">
+          <button type="button" class="tab-btn role-tab-btn active simulator" data-tab="simulator-tab">
+            <span>⚡</span>
+            <span>Quota Simulator</span>
+          </button>
+          <button type="button" class="tab-btn role-tab-btn analytics" data-tab="analytics-tab">
+            <span>📊</span>
+            <span>Admin Analytics</span>
+          </button>
+        </div>
+
+        <div class="status-badge" id="backendStatusBadge" title="Apigee Gateway Status">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="statusText">Gateway Active</span>
+        </div>
+
+        <button type="button" class="theme-toggle-btn" id="themeToggleBtn" title="Toggle Light / Dark mode">
+          <svg id="themeIconSun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg id="themeIconMoon" style="display: none;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      
+      <!-- ========================================================== -->
+      <!-- TAB 1: QUOTA SIMULATOR                                     -->
+      <!-- ========================================================== -->
+      <section id="simulator-tab" class="tab-pane active">
+        
+        <div class="simulator-layout">
+          <!-- LEFT PANEL: Select Consumer Application (Resizable) -->
+          <aside class="simulator-left-panel" id="simulator-left-panel">
+            <div class="section-card app-selector-section">
+              <div class="section-header">
+                <div>
+                  <div class="section-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <span>Select Consumer Application</span>
+                  </div>
+                  <p class="section-desc">Choose between Basic (Silver: 4,000 tokens) and Premium (Gold: 40,000 tokens) apps to simulate tier-based rate limiting.</p>
+                </div>
+                <div class="legend-badge-group">
+                  <span class="tier-legend silver">Silver: 4k Tokens / 5m</span>
+                  <span class="tier-legend gold">Gold: 40k Tokens / 5m</span>
+                </div>
+              </div>
+
+              <div class="apps-grid" id="apps-grid">
+                <!-- App cards will be rendered dynamically by JavaScript -->
+              </div>
+            </div>
+          </aside>
+
+          <!-- RESIZABLE SPLITTER -->
+          <div class="panel-splitter" id="panel-splitter" role="separator" aria-orientation="vertical" tabindex="0" title="Drag to resize panels (Double-click to reset)">
+            <div class="splitter-handle"></div>
+          </div>
+
+          <!-- RIGHT PANEL: Live Quota Meter & Simulation Playground -->
+          <div class="simulator-right-panel" id="simulator-right-panel">
+            <!-- Selected App Live Meter Banner -->
+            <div class="quota-meter-card" id="quota-meter-banner">
+              <div class="meter-header">
+                <div class="meter-info">
+                  <div class="meter-app-title">
+                    <span class="tier-tag silver" id="meter-tier-tag">Silver Tier</span>
+                    <h3 id="meter-app-name">Gemini-Basic-Mfg-SmartTV-App</h3>
+                    <span class="dept-badge" id="meter-dept-badge">Manufacturing / Smart TV division</span>
+                  </div>
+                  <p class="meter-desc" id="meter-app-desc">5-Minute Rolling Token Quota Enforcement Window</p>
+                </div>
+                <div class="meter-status-pill active" id="meter-status-pill">
+                  <span class="status-indicator"></span>
+                  <span id="meter-status-text">Active (Quota Available)</span>
+                </div>
+              </div>
+
+              <div class="progress-bar-container">
+                <div class="progress-bar-track">
+                  <div class="progress-bar-fill" id="meter-progress-fill" style="width: 0%;"></div>
+                </div>
+                <div class="meter-labels">
+                  <div class="meter-usage-text">
+                    <strong id="meter-tokens-used">0</strong> / <span id="meter-quota-limit">4,000</span> tokens consumed
+                    <span class="percentage" id="meter-percentage">(0.0%)</span>
+                  </div>
+                  <div class="meter-remaining-text">
+                    Remaining: <strong id="meter-tokens-remaining">4,000</strong> tokens
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Simulation Playground Grid (2 Columns: Request & Response) -->
+            <div class="simulation-grid">
+              
+              <!-- Column 1: Request Controls -->
+              <div class="card request-card">
+                <div class="card-header">
+                  <div class="card-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                    <span>Simulation Controls</span>
+                  </div>
+                  <div class="burst-counter-wrapper">
+                    <label for="burst-count">Burst Calls:</label>
+                    <select id="burst-count" class="dropdown-small">
+                      <option value="3" selected>3 Calls</option>
+                      <option value="4">4 Calls</option>
+                      <option value="5">5 Calls</option>
+                      <option value="8">8 Calls</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Prompt Presets -->
+                <div class="form-group">
+                  <label class="form-label">Prompt Presets (Calibrated for Token Load):</label>
+                  <div class="preset-buttons">
+                    <button type="button" class="preset-btn" data-preset="light">
+                      <span class="preset-title">⚡ Light Query</span>
+                      <span class="preset-tokens">~30 tokens</span>
+                    </button>
+                    <button type="button" class="preset-btn active" data-preset="medium">
+                      <span class="preset-title">📝 Medium Analysis</span>
+                      <span class="preset-tokens">~350 tokens</span>
+                    </button>
+                    <button type="button" class="preset-btn quota-burner" data-preset="heavy">
+                      <span class="preset-title">💥 Heavy Quota Burner</span>
+                      <span class="preset-tokens">~1,500 - 2,500 tokens</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Prompt Input -->
+                <div class="form-group">
+                  <div class="label-row">
+                    <label for="prompt-input" class="form-label">Prompt to Gemini 2.5 Flash:</label>
+                    <span class="char-count" id="prompt-char-count">0 chars</span>
+                  </div>
+                  <textarea id="prompt-input" rows="5" class="prompt-textarea" placeholder="Type prompt here..."></textarea>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-btn-group">
+                  <button id="send-single-btn" class="btn btn-primary">
+                    <span class="btn-icon">🚀</span>
+                    <span>Send Single Request</span>
+                  </button>
+                  <button id="simulate-burst-btn" class="btn btn-danger">
+                    <span class="btn-icon">⚡</span>
+                    <span>Simulate Burst (Auto-Exhaust Quota)</span>
+                  </button>
+                </div>
+
+                <div class="tips-box">
+                  <strong>💡 Demo Tip:</strong> Using the <em>Basic App</em> (Silver: 4,000 tokens) with the <em>Heavy Quota Burner</em> prompt will exhaust the token quota in <strong>2 to 3 calls</strong>, triggering an instant <code>HTTP 429 RESOURCE_EXHAUSTED</code>! Switch to the <em>Premium App</em> (Gold: 40,000 tokens) to see all calls succeed effortlessly.
+                </div>
+              </div>
+
+              <!-- Column 2: Live Gateway Response & Inspector -->
+              <div class="card response-card">
+                <div class="card-header">
+                  <div class="card-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span>Gateway Response & Token Telemetry</span>
+                  </div>
+                  <div class="latency-pill" id="response-latency-pill" style="display: none;">
+                    <span class="stopwatch">⏱️</span>
+                    <span id="response-latency">0 ms</span>
+                  </div>
+                </div>
+
+                <!-- Quota Exhaustion Alert Container (Hidden by default) -->
+                <div id="quota-exceeded-alert" class="alert-exceeded" style="display: none;">
+                  <div class="alert-icon">⛔</div>
+                  <div class="alert-content">
+                    <div class="alert-title-row">
+                      <h4>HTTP 429 RESOURCE_EXHAUSTED</h4>
+                      <span class="fault-code">policies.ratelimit.QuotaViolation</span>
+                    </div>
+                    <p id="quota-alert-message">LLM Token Quota limit exceeded for your tier (4,000 tokens / 5 mins). Request blocked by Apigee gateway.</p>
+                    <div class="alert-actions">
+                      <button id="quick-switch-gold-btn" class="btn btn-gold-upgrade">
+                        <span>⚡ Switch to Gemini-Premium-Network-Core-App (Gold 40,000 Tokens)</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Token Usage Breakdown Chips -->
+                <div class="token-chips-grid" id="token-chips-grid" style="display: none;">
+                  <div class="chip">
+                    <span class="chip-label">Prompt Tokens</span>
+                    <strong class="chip-value" id="chip-prompt-tokens">0</strong>
+                  </div>
+                  <div class="chip">
+                    <span class="chip-label">Candidates Tokens</span>
+                    <strong class="chip-value" id="chip-candidates-tokens">0</strong>
+                  </div>
+                  <div class="chip highlight">
+                    <span class="chip-label">Total Call Tokens</span>
+                    <strong class="chip-value" id="chip-total-tokens">0</strong>
+                  </div>
+                  <div class="chip">
+                    <span class="chip-label">HTTP Status</span>
+                    <strong class="chip-value status-200" id="chip-http-status">200 OK</strong>
+                  </div>
+                </div>
+
+                <!-- Response Output Box -->
+                <div class="response-body-wrapper">
+                  <div class="empty-state" id="response-empty-state">
+                    <div class="empty-icon">💬</div>
+                    <p>Send a request or click <strong>Simulate Burst</strong> to inspect Gemini's response and Apigee's live token enforcement telemetry.</p>
+                  </div>
+                  <div class="response-content" id="response-content" style="display: none;">
+                    <div class="markdown-output" id="response-text"></div>
+                  </div>
+                  <!-- Burst Execution Steps Progress -->
+                  <div class="burst-steps-container" id="burst-steps-container" style="display: none;">
+                    <h4>Burst Simulation Execution Steps</h4>
+                    <div class="burst-steps-list" id="burst-steps-list"></div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ========================================================== -->
+      <!-- TAB 2: ADMIN ANALYTICS DASHBOARD                           -->
+      <!-- ========================================================== -->
+      <section id="analytics-tab" class="tab-pane">
+        
+        <!-- Filter Controls Bar -->
+        <div class="analytics-filter-bar">
+          <div class="filter-group">
+            <span class="filter-label">Time Window:</span>
+            <div class="duration-pills">
+              <button class="duration-btn active" data-duration="1h">Last 1 Hour</button>
+              <button class="duration-btn" data-duration="1d">Last 1 Day</button>
+              <button class="duration-btn" data-duration="3d">Last 3 Days</button>
+              <button class="duration-btn" data-duration="7d">Last 7 Days</button>
+            </div>
+            <span id="active-duration-badge" class="time-range-badge">📅 Active Window: Last 1 Hour</span>
+          </div>
+
+          <div class="filter-actions">
+            <button id="refresh-analytics-btn" class="btn btn-secondary">
+              <span class="btn-icon">🔄</span>
+              <span>Refresh</span>
+            </button>
+            <button id="reset-ledger-btn" class="btn btn-outline-danger" title="Reset demo session ledger">
+              <span>Reset Demo Data</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI Summary Cards Grid -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-icon blue">📡</div>
+            <div class="kpi-data">
+              <span class="kpi-title">Total LLM Requests</span>
+              <h3 class="kpi-value" id="kpi-total-requests">0</h3>
+              <span class="kpi-subtext" id="kpi-requests-breakdown">0 Success • 0 Throttled</span>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon purple">🪙</div>
+            <div class="kpi-data">
+              <span class="kpi-title">Total Tokens Consumed</span>
+              <h3 class="kpi-value" id="kpi-total-tokens">0</h3>
+              <span class="kpi-subtext" id="kpi-tokens-breakdown">0 Prompt • 0 Candidates</span>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon red">⛔</div>
+            <div class="kpi-data">
+              <span class="kpi-title">Quota Violations (429s)</span>
+              <h3 class="kpi-value" id="kpi-quota-violations">0</h3>
+              <span class="kpi-subtext" id="kpi-violation-rate">0.0% Rate</span>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon green">⚡</div>
+            <div class="kpi-data">
+              <span class="kpi-title">Average Latency</span>
+              <h3 class="kpi-value" id="kpi-avg-latency">0 ms</h3>
+              <span class="kpi-subtext">Across Successful Calls</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Grid (2x2 Grid) -->
+        <div class="charts-grid">
+          
+          <!-- Chart 1: By API Product -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title-group">
+                <h4>Tokens by API Product (Silver vs Gold)</h4>
+                <span class="chart-duration-tag" id="tag-chart-product">Last 1 Hour</span>
+              </div>
+              <span class="dim-tag">Dimension: api_product</span>
+            </div>
+            <div class="chart-canvas-wrapper">
+              <canvas id="chart-product"></canvas>
+            </div>
+          </div>
+
+          <!-- Chart 2: By Developer App -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title-group">
+                <h4>Tokens by Developer App</h4>
+                <span class="chart-duration-tag" id="tag-chart-app">Last 1 Hour</span>
+              </div>
+              <span class="dim-tag">Dimension: developer_app</span>
+            </div>
+            <div class="chart-canvas-wrapper">
+              <canvas id="chart-app"></canvas>
+            </div>
+          </div>
+
+          <!-- Chart 3: By Department -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title-group">
+                <h4>Tokens by Department (Governance)</h4>
+                <span class="chart-duration-tag" id="tag-chart-dept">Last 1 Hour</span>
+              </div>
+              <span class="dim-tag">Dimension: dc_department</span>
+            </div>
+            <div class="chart-canvas-wrapper">
+              <canvas id="chart-department"></canvas>
+            </div>
+          </div>
+
+          <!-- Chart 4: By Sub-Department -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title-group">
+                <h4>Tokens by Sub-Department</h4>
+                <span class="chart-duration-tag" id="tag-chart-subdept">Last 1 Hour</span>
+              </div>
+              <span class="dim-tag">Dimension: dc_sub_department</span>
+            </div>
+            <div class="chart-canvas-wrapper">
+              <canvas id="chart-sub-department"></canvas>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Full Width Consumption Timeline -->
+        <div class="chart-card timeline-card">
+          <div class="chart-header">
+            <div class="chart-title-group">
+              <h4>Token Consumption Timeline & Traffic Trend</h4>
+              <span class="chart-duration-tag" id="tag-chart-timeline">Last 1 Hour</span>
+            </div>
+            <span class="dim-tag">Temporal Aggregation</span>
+          </div>
+          <div class="chart-canvas-wrapper large">
+            <canvas id="chart-timeline"></canvas>
+          </div>
+        </div>
+
+        <!-- Detailed Transaction Audit Ledger -->
+        <div class="table-card">
+          <div class="table-header">
+            <div>
+              <h4>Detailed Transaction Audit Ledger <span id="tx-table-count" class="badge-counter">0 transactions</span></h4>
+              <p class="table-desc" id="tx-table-desc">Real-time audit log captured by Apigee Data Capture policies and proxy telemetry (filtered by active duration).</p>
+            </div>
+            <div class="table-search-group">
+              <input type="text" id="tx-search-input" class="search-input" placeholder="Filter by app, dept, or status...">
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table" id="tx-table">
+              <thead>
+                <tr>
+                  <th>Time (UTC)</th>
+                  <th>App Name</th>
+                  <th>Product / Tier</th>
+                  <th>Department</th>
+                  <th>Sub-Department</th>
+                  <th>Tokens (P / C / Total)</th>
+                  <th>Status</th>
+                  <th>Latency</th>
+                </tr>
+              </thead>
+              <tbody id="tx-table-body">
+                <tr>
+                  <td colspan="8" class="empty-cell">No transactions recorded yet. Run a simulation to populate ledger!</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- ARCHITECTURE MODAL -->
+    <div class="modal-overlay" id="archModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title">
+            <svg class="apigee-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 81 82" width="20" height="20" fill="#fff" fill-rule="evenodd" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
+              <use xlink:href="#ApigeeLogoMark" x=".5" y=".5"/>
+            </svg>
+            <span>Apigee X LLM Token Quota Architecture</span>
+          </div>
+          <button type="button" class="close-btn" id="closeModalBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="arch-section">
+            <h4>1. Tiered LLM API Products & Quotas</h4>
+            <div class="arch-tiers-grid">
+              <div class="arch-tier-box silver">
+                <strong>Gemini-Silver-Tier</strong>
+                <span>Basic Apps (Smart TV, Audio Signal)</span>
+                <div class="tier-detail">Quota: 4,000 Tokens / 5 Minutes</div>
+              </div>
+              <div class="arch-tier-box gold">
+                <strong>Gemini-Gold-Tier</strong>
+                <span>Premium Apps (Network Core, Wireless)</span>
+                <div class="tier-detail">Quota: 40,000 Tokens / 5 Minutes</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="arch-section">
+            <h4>2. Flow & Policy Execution Pipeline</h4>
+            <div class="policy-pipeline">
+              <div class="pipeline-step">
+                <span class="step-num">1</span>
+                <div>
+                  <strong>VerifyAPIKey</strong>
+                  <p>Authenticates consumer app key and binds product metadata + custom department attributes.</p>
+                </div>
+              </div>
+              <div class="pipeline-step">
+                <span class="step-num">2</span>
+                <div>
+                  <strong>LLMTokenQuota-Enforce</strong>
+                  <p>Enforces rolling 5-minute quota window keyed by <code>developer_app</code> based on product quota attributes.</p>
+                </div>
+              </div>
+              <div class="pipeline-step">
+                <span class="step-num">3</span>
+                <div>
+                  <strong>Target: Vertex AI Gemini 2.5 Flash</strong>
+                  <p>Proxies LLM payload to Google Cloud Vertex AI endpoint in <code>asia-southeast1</code>.</p>
+                </div>
+              </div>
+              <div class="pipeline-step">
+                <span class="step-num">4</span>
+                <div>
+                  <strong>DataCapture (Response & Fault Flow)</strong>
+                  <p>Captures prompt tokens, candidate tokens, total tokens, latency, app, and department dimensions for real-time analytics.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Minimalist Footer -->
+    <footer class="app-footer">
+      <div class="footer-left">
+        <span>Apigee X Org: <code>YOUR_APIGEE_ORG</code> (default-dev)</span>
+        <span class="sep">•</span>
+        <span>Gateway: <code>YOUR_APIGEE_GATEWAY_HOST</code></span>
+        <span class="sep">•</span>
+        <span>Model: <code>gemini-2.5-flash</code></span>
+      </div>
+      <div class="footer-right">
+        <span>Apigee Policies: <code>VerifyAPIKey</code>, <code>LLMTokenQuota</code>, <code>DataCapture</code>, <code>FaultRules</code></span>
+      </div>
+    </footer>
+
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

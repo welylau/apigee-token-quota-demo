@@ -1,0 +1,36 @@
+# Exclude sensitive sanitization and restoration scripts
+sanitize.sh
+restore.sh
+.secrets_backup.env
+*.env
+
+# Python Virtual Environment & Bytecode
+web-ui/.venv/
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Runtime Databases & Logs
+web-ui/data/*.db
+web-ui/data/*.sqlite
+*.db
+*.sqlite
+*.log
+
+# macOS System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# IDE and Editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<LLMTokenQuota continueOnError="false" enabled="true" name="LLMTokenQuota-Enforce" type="rollingwindow">
+    <DisplayName>LLM Token Quota Enforce</DisplayName>
+    <SharedName>gemini-token-quota</SharedName>
+    <EnforceOnly>true</EnforceOnly>
+    <LLMModelSource>gemini-2.5-flash</LLMModelSource>
+    <Identifier ref="verifyapikey.VerifyAPIKey.client_id"/>
+    <UseQuotaConfigInAPIProduct stepName="VerifyAPIKey">
+        <DefaultConfig>
+            <Allow>4000</Allow>
+            <Interval>5</Interval>
+            <TimeUnit>minute</TimeUnit>
+        </DefaultConfig>
+    </UseQuotaConfigInAPIProduct>
+    <Distributed>true</Distributed>
+    <Synchronous>true</Synchronous>
+</LLMTokenQuota>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<AssignMessage continueOnError="false" enabled="true" name="AM-Set-Unauthorized-Response">
+    <DisplayName>Set Unauthorized Response</DisplayName>
+    <Set>
+        <Headers>
+            <Header name="Content-Type">application/json</Header>
+        </Headers>
+        <Payload contentType="application/json">{
+    "error": {
+        "code": 401,
+        "message": "Invalid or missing API key. Please provide a valid 'x-api-key' header.",
+        "status": "UNAUTHENTICATED"
+    }
+}</Payload>
+        <StatusCode>401</StatusCode>
+        <ReasonPhrase>Unauthorized</ReasonPhrase>
+    </Set>
+    <AssignTo createNew="false" transport="http" type="response"/>
+</AssignMessage>

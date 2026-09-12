@@ -1,0 +1,16 @@
+{
+  "name": "Gemini-Basic-Mfg-AudioSignal-App",
+  "apiProducts": [
+    "Gemini-Silver-Tier"
+  ],
+  "attributes": [
+    {
+      "name": "Department",
+      "value": "Manufacturing"
+    },
+    {
+      "name": "Sub Department",
+      "value": "AudioSignal division"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<DataCapture continueOnError="true" enabled="true" name="DC-AiTelemetry">
+    <DisplayName>DC-AiTelemetry</DisplayName>
+    <Capture>
+        <DataCollector>dc_ai_model</DataCollector>
+        <Collect ref="ai.model" default="gemini-2.5-flash"/>
+    </Capture>
+    <Capture>
+        <DataCollector>dc_ai_prompt_token_count</DataCollector>
+        <Collect ref="ai.promptTokenCount" default="0"/>
+    </Capture>
+    <Capture>
+        <DataCollector>dc_ai_response_token_count</DataCollector>
+        <Collect ref="ai.responseTokenCount" default="0"/>
+    </Capture>
+    <Capture>
+        <DataCollector>dc_ai_total_token_count</DataCollector>
+        <Collect ref="ai.totalTokenCount" default="0"/>
+    </Capture>
+    <Capture>
+        <DataCollector>dc_department</DataCollector>
+        <Collect ref="ai.department" default="Unknown"/>
+    </Capture>
+    <Capture>
+        <DataCollector>dc_sub_department</DataCollector>
+        <Collect ref="ai.subDepartment" default="Unknown"/>
+    </Capture>
+</DataCapture>

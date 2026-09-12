@@ -1,0 +1,16 @@
+{
+  "name": "Gemini-Premium-Network-Core-App",
+  "apiProducts": [
+    "Gemini-Gold-Tier"
+  ],
+  "attributes": [
+    {
+      "name": "Department",
+      "value": "Network"
+    },
+    {
+      "name": "Sub Department",
+      "value": "Core division"
+    }
+  ]
+}

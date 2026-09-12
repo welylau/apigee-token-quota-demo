@@ -1,0 +1,112 @@
+{
+  "name": "Gemini-Silver-Tier",
+  "displayName": "Gemini-Silver-Tier",
+  "approvalType": "auto",
+  "attributes": [
+    {
+      "name": "access",
+      "value": "public"
+    }
+  ],
+  "description": "Gemini API Product with Silver Tier Quota: 4,000 tokens per 5 minutes",
+  "environments": [
+    "default-dev"
+  ],
+  "quota": "4000",
+  "quotaInterval": "5",
+  "quotaTimeUnit": "minute",
+  "llmQuota": "4000",
+  "llmQuotaInterval": "5",
+  "llmQuotaTimeUnit": "minute",
+  "operationGroup": {
+    "operationConfigs": [
+      {
+        "apiSource": "gemini-token-limit-demo",
+        "operations": [
+          {
+            "resource": "/"
+          }
+        ],
+        "quota": {
+          "limit": "4000",
+          "interval": "5",
+          "timeUnit": "minute"
+        }
+      },
+      {
+        "apiSource": "gemini-token-limit-demo",
+        "operations": [
+          {
+            "resource": "/**"
+          }
+        ],
+        "quota": {
+          "limit": "4000",
+          "interval": "5",
+          "timeUnit": "minute"
+        }
+      }
+    ],
+    "operationConfigType": "proxy"
+  },
+  "llmOperationGroup": {
+    "operationConfigs": [
+      {
+        "apiSource": "gemini-token-limit-demo",
+        "llmOperations": [
+          {
+            "resource": "/",
+            "model": "gemini-2.5-flash"
+          }
+        ],
+        "llmTokenQuota": {
+          "limit": "4000",
+          "interval": "5",
+          "timeUnit": "minute"
+        }
+      },
+      {
+        "apiSource": "gemini-token-limit-demo",
+        "llmOperations": [
+          {
+            "resource": "/",
+            "model": "gemini-2.5-flash-lite"
+          }
+        ],
+        "llmTokenQuota": {
+          "limit": "4000",
+          "interval": "5",
+          "timeUnit": "minute"
+        }
+      },
+      {
+        "apiSource": "gemini-token-limit-demo",
+        "llmOperations": [
+          {
+            "resource": "/**",
+            "model": "gemini-2.5-flash"
+          }
+        ],
+        "llmTokenQuota": {
+          "limit": "4000",
+          "interval": "5",
+          "timeUnit": "minute"
+        }
+      },
+      {
+        "apiSource": "gemini-token-limit-demo",
+        "llmOperations": [
+          {
+            "resource": "/**",
+            "model": "gemini-2.5-flash-lite"
+          }
+        ],
+        "llmTokenQuota": {
+          "limit": "4000",
+          "interval": "5",
+          "timeUnit": "minute"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<AssignMessage continueOnError="false" enabled="true" name="AM-Set-Quota-Violation-Response">
+    <DisplayName>Set Quota Violation Response</DisplayName>
+    <Set>
+        <Headers>
+            <Header name="Content-Type">application/json</Header>
+            <Header name="Retry-After">300</Header>
+        </Headers>
+        <Payload contentType="application/json">{
+    "error": {
+        "code": 429,
+        "message": "LLM Token Quota limit exceeded for your tier. Please retry after your 5-minute quota window resets.",
+        "status": "RESOURCE_EXHAUSTED"
+    }
+}</Payload>
+        <StatusCode>429</StatusCode>
+        <ReasonPhrase>Too Many Requests</ReasonPhrase>
+    </Set>
+    <AssignTo createNew="false" transport="http" type="response"/>
+</AssignMessage>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<AssignMessage continueOnError="false" enabled="true" name="AM-Set-Internal-Error-Response">
+    <DisplayName>Set Internal Error Response</DisplayName>
+    <Set>
+        <Headers>
+            <Header name="Content-Type">application/json</Header>
+        </Headers>
+        <Payload contentType="application/json">{
+    "error": {
+        "code": 500,
+        "fault_name": "{fault.name}",
+        "fault_string": "{fault.string}"
+    }
+}</Payload>
+        <StatusCode>500</StatusCode>
+        <ReasonPhrase>Internal Server Error</ReasonPhrase>
+    </Set>
+    <AssignTo createNew="false" transport="http" type="response"/>
+</AssignMessage>
