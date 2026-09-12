@@ -236,55 +236,104 @@ To test all 4 apps and error handling automatically:
 
 ## 🖥️ Interactive Web-UI & Admin Analytics Dashboard
 
-A dedicated, full-featured web application is included to demonstrate **Token Quota Simulation** and **Multi-dimensional Admin Analytics**.
+<p align="center">
+  <img src="docs/images/webui-dashboard.png" alt="Apigee LLM Token Quota Demo Web UI Dashboard" width="100%">
+</p>
 
-### 1. Cloud Run Deployment with Identity-Aware Proxy (IAP)
+A dedicated, full-featured web application is included to demonstrate **Token Quota Simulation**, **Real-time Quota Enforcement**, and **Multi-dimensional Governance Analytics**.
+
+---
+
+### 📖 Step-by-Step Guide: How to Use the Web UI
+
+Follow these steps to demonstrate how Apigee inspects, counts, and strictly enforces token quotas on Gemini models:
+
+```
+┌─────────────────────────┐     ┌────────────────────────┐     ┌────────────────────────┐
+│  1. Select App & Tier   │ ──► │  2. Pick Prompt Preset │ ──► │  3. Send or Burst Test │
+│ (Silver: 4k / Gold: 40k)│     │  (Light/Medium/Burner) │     │ (Real-time Gateway Call)│
+└─────────────────────────┘     └────────────────────────┘     └────────────────────────┘
+                                                                            │
+                                                                            ▼
+┌─────────────────────────┐     ┌────────────────────────┐     ┌────────────────────────┐
+│ 6. Multi-Dim Analytics  │ ◄── │  5. Tier SLA Upgrade   │ ◄── │  4. Observe Quota 429  │
+│(App/Dept/Product Charts)│     │(Gold Tier 40k Capacity)│     │ (Bar Turns Red + Alert)│
+└─────────────────────────┘     └────────────────────────┘     └────────────────────────┘
+```
+
+#### Step 1: Select a Consumer Application & Review Tier Limits
+1. On the left-hand panel (**Select Consumer Application**), pick an app. (You can click and drag the vertical splitter bar to resize this panel).
+2. Choose a **Basic App (Silver Tier)**:
+   * `Smart TV App` (Department: *Manufacturing*, Sub-department: *Smart TV division*)
+   * **Active Quota**: **4,000 tokens / 5 minutes**.
+3. Notice the **Active Quota** bar at the top of the main card displays rolling 5-minute token consumption (`0 / 4,000 tokens consumed (0%)`).
+
+#### Step 2: Choose a Prompt Preset
+Select one of the calibrated prompt presets to evaluate token consumption:
+* ⚡ **Light Query** (`~30 tokens`): Quick question (`Summarize how Apigee secures Gemini AI APIs in 2 short bullet points`).
+* 📝 **Medium Analysis** (`~350 tokens`): Technical analysis prompt (`Analyze microservices latency in multi-region deployments`).
+* 💥 **Heavy Quota Burner** (`~1,500 - 2,500 tokens`): Heavy engineering prompt designed to rapidly consume quota headroom.
+
+#### Step 3: Simulate Traffic (Single Request vs. Burst Load)
+* **Single Request**: Click **`🚀 Send Single Request`**.
+  * Apigee verifies the API Key, queries Gemini 2.5 Flash on Vertex AI, extracts `promptTokenCount` and `candidatesTokenCount` from the response, logs analytics telemetry via `DataCapture`, and increments the distributed quota counter.
+  * The **Active Quota** progress bar updates immediately to reflect the new token count.
+  * The **Gateway Response & Token Telemetry** pane displays the Gemini response text along with a detailed token ledger: **Prompt Tokens**, **Response Tokens**, **Total Tokens**, and **Gateway Latency**.
+* **Burst Simulation**: Click **`⚡ Simulate Burst (Auto-Exhaust Quota)`**.
+  * Select between `3`, `5`, or `10` rapid-fire requests from the dropdown.
+  * The UI triggers concurrent or rapid sequential requests against the Apigee Gateway.
+
+#### Step 4: Observe Token Quota Breach & HTTP 429 Response
+1. With the **Silver Tier (4,000 tokens)** app selected, trigger a 3-call burst using the *Heavy Quota Burner* preset.
+2. In **2 to 3 calls**, the cumulative token count crosses 4,000 tokens.
+3. Apigee's `LLMTokenQuota-Enforce` policy evaluates the rolling token counter and rejects subsequent calls with:
+   * **HTTP Status**: `429 Too Many Requests`
+   * **Fault Code**: `policies.ratelimit.QuotaViolation`
+   * **Error Message**: `LLM Token Quota Exceeded: Your application has exceeded its allowed token rate limit.`
+4. The UI immediately transitions:
+   * Progress bar turns **Crimson Red (100% / Exhausted)**.
+   * Status indicator updates to **⚠️ Quota Exhausted (429 Active)**.
+   * An upgrade banner suggests switching to a **Gold Tier** consumer application.
+
+#### Step 5: Upgrade to Premium Tier App (Gold Tier)
+1. In the left panel, click on `Network Core App` or `Network Wireless App` (**Gold Tier - 40,000 tokens / 5 mins**).
+2. Re-run the identical burst simulation.
+3. The requests succeed effortlessly because the application has **10x the token capacity**, illustrating how enterprises can tier API products and monetize LLM capabilities based on token quotas.
+
+#### Step 6: Explore Multi-Dimensional Admin Analytics
+1. Click the **Admin Analytics** tab at the top header.
+2. Select a time window: `Last 1 Hour`, `Last 1 Day`, `Last 3 Days`, or `Last 7 Days`.
+3. View interactive charts powered by Chart.js:
+   * **By API Product**: Compare token volume consumed by `Gemini-Silver-Tier` vs `Gemini-Gold-Tier`.
+   * **By Developer App**: Identify which specific application is consuming the highest token volume.
+   * **By Department**: Breakdown across business units (`Manufacturing` vs `Network`).
+   * **By Sub-Department**: Drill down into operational divisions (`Smart TV`, `AudioSignal`, `Core division`, `Wireless division`).
+   * **Timeline Trend**: Hourly / daily token usage trends and peak traffic spikes.
+4. Review the **Audit Transaction Ledger**: A granular table listing recent API requests, prompt/response token breakdowns, latency, and quota compliance status.
+
+#### Step 7: Reset Demo Baseline
+* At any time, click the **Reset Session** button in the header to purge live test traffic and restore the clean 7-day demo baseline.
+
+---
+
+### 🚀 Launching the Web UI
+
+#### Option A: Direct Access via Cloud Run (Secured with IAP)
 The UI is deployed directly to **Google Cloud Run** in `asia-southeast1` within project `YOUR_GCP_PROJECT_ID` secured with **Identity-Aware Proxy (IAP)**:
 * **Service Name**: `apigee-token-limit-demo-ui`
 * **Region**: `asia-southeast1`
 * **Direct Cloud Run URL**: **[https://apigee-token-limit-demo-ui-PROJECT_NUMBER.asia-southeast1.run.app](https://apigee-token-limit-demo-ui-PROJECT_NUMBER.asia-southeast1.run.app)**
-* **Authentication Mechanism**: Google Identity-Aware Proxy (IAP).
-  * Direct invocation on the Cloud Run service is locked down to the Google IAP Service Agent (`service-PROJECT_NUMBER@gcp-sa-iap.iam.gserviceaccount.com`).
-  * End-user browser access is governed by the `roles/iap.httpsResourceAccessor` role, specifically granted to `developer@example.com`.
-* **Direct Access**: Simply navigate to the URL in your browser logged in as `developer@example.com`. Google IAP will seamlessly authenticate your session without requiring intermediate proxies or manual token headers.
+* **Authentication**: Google Identity-Aware Proxy (IAP). Simply open the URL while logged into your authorized Google Cloud account.
 
-### 2. Local Development Launch
-To launch locally anytime from terminal:
+#### Option B: Local Development Launch
+To launch locally on your machine:
 ```bash
 ./run-ui.sh
+
 # Or specify a custom port:
 PORT=8089 ./run-ui.sh
 ```
-Then open **[http://localhost:8089](http://localhost:8089)**.
+Then open **[http://localhost:8089](http://localhost:8089)** in your web browser.
 
-### 3. Features
-
-#### ⚡ Tab 1: Token Quota Simulator
-* **Interactive App Selector**:
-  * **Basic Apps (Silver Tier - 4,000 tokens / 5 mins)**:
-    * `Gemini-Basic-Mfg-SmartTV-App` (Manufacturing / Smart TV division)
-    * `Gemini-Basic-Mfg-AudioSignal-App` (Manufacturing / AudioSignal division)
-  * **Premium Apps (Gold Tier - 40,000 tokens / 5 mins - 10x capacity)**:
-    * `Gemini-Premium-Network-Core-App` (Network / Core division)
-    * `Gemini-Premium-Network-Wireless-App` (Network / Wireless division)
-* **Live Quota Usage Gauge**:
-  * Shows rolling 5-minute token consumption vs tier limit (`Tokens Used / Limit (Percentage)`).
-  * Real-time animated bar: Green (OK) → Amber (Warning >60%) → Crimson Red (Exhausted >85% / 429).
-* **Quota Exhaustion Demonstration**:
-  * Use **Simulate Burst (Auto-Exhaust Quota)** with the *Heavy Quota Burner* prompt on a Basic App.
-  * In **2 to 3 calls**, the 4,000-token limit is breached.
-  * Apigee triggers **`HTTP 429 RESOURCE_EXHAUSTED`** (`policies.ratelimit.QuotaViolation`).
-  * A 1-click upgrade button allows instantly switching to **`Gemini-Premium-Network-Core-App` (Gold Tier)** to verify that the identical burst completes successfully!
-
-#### 📊 Tab 2: Admin Analytics Dashboard
-* **Time Duration Filter**:
-  * Toggle between: `Last 1 Hour`, `Last 1 Day`, `Last 3 Days`, `Last 7 Days`.
-* **Multi-Dimensional Visualizations (Chart.js)**:
-  1. **By API Product**: `Gemini-Silver-Tier` vs `Gemini-Gold-Tier`
-  2. **By Developer App**: SmartTV vs AudioSignal vs Network-Core vs Network-Wireless
-  3. **By Department**: `Manufacturing` vs `Network` (Organizational cost & consumption governance)
-  4. **By Sub-Department**: `Smart TV division`, `AudioSignal division`, `Core division`, `Wireless division`
-  5. **Timeline Trend**: Token consumption volume across time buckets.
-* **Audit Transaction Ledger**:
-  * Filterable, searchable table displaying Timestamp, App, Product, Department, Sub-Department, Tokens (Prompt / Response / Total), Status (200 OK vs 429 Quota Exceeded), and Latency.
+---
 
