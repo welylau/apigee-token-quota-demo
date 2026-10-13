@@ -33,7 +33,9 @@ export class GuidedTour {
 
     const params = new URLSearchParams(window.location.search);
     const forced = params.get('tour');
-    if (forced && forced !== '0') {
+    if (forced === '0') {
+      // ?tour=0: never auto-open (screenshots, presenting). The header button still works.
+    } else if (forced) {
       const idx = MISSIONS.findIndex((m) => m.id === forced);
       if (idx >= 0) this.start(idx); else this.showWelcome();
     } else if (this.state.active) {

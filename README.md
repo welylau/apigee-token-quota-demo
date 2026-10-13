@@ -4,6 +4,8 @@ This repository contains the complete Apigee API Proxy bundle, declarative API P
 
 Deployed and operational in Apigee organization: **`YOUR_APIGEE_ORG`** (Environment: **`default-dev`**).
 
+It also includes an interactive Web UI (see below) with a 🗺️ Guided Tour, ⚙️ scenario presets to relabel the demo for different audiences, and 📊 Admin Analytic (aggregated and per-app token usage).
+
 ---
 
 ## 🏛️ Architecture Diagram & Policy Flow
@@ -234,106 +236,183 @@ To test all 4 apps and error handling automatically:
 
 ---
 
-## 🖥️ Interactive Web-UI & Admin Analytics Dashboard
+## 🖥️ Interactive Web UI & Admin Analytic
 
 <p align="center">
-  <img src="docs/images/webui-dashboard.png" alt="Apigee LLM Token Quota Demo Web UI Dashboard" width="100%">
+  <img src="docs/images/webui-dashboard.png" alt="Apigee LLM Token Quota Demo Web UI" width="100%">
 </p>
 
-A dedicated, full-featured web application is included to demonstrate **Token Quota Simulation**, **Real-time Quota Enforcement**, and **Multi-dimensional Governance Analytics**.
+The Web UI (`web-ui/`, Flask + vanilla JS) lets you send prompts through the Apigee proxy as any of the 4 developer apps, watch each app's 5-minute token budget fill up, hit HTTP 429, and explore the resulting analytics.
+
+| Area | What it shows |
+| :--- | :--- |
+| **Left panel** | The 4 developer apps as profiles (e.g. *Select Engineer Profile*), the live 5-minute quota meter for the selected app, and **View Architecture Diagram** |
+| **Simulation Controls** | Prompt presets, the prompt box, **Send Single Request** and **Simulate Burst** (3, 4, 5 or 8 calls) |
+| **Gateway Response & Token Telemetry** | Gemini's answer, prompt / response / total tokens, HTTP status and latency, or the 429 alert |
+| **🗺️ Guided Tour** (header) | A 6-mission walkthrough of the demo |
+| **📊 Admin Analytic** (header or right-edge tab) | One drawer with **Aggregated** and **App-Specific** tabs |
+| **⚙️ Settings** (header) | Scenario presets that relabel products, apps and attributes for your audience |
 
 ---
 
-### 📖 Step-by-Step Guide: How to Use the Web UI
+### 🗺️ Guided Tour
 
-Follow these steps to demonstrate how Apigee inspects, counts, and strictly enforces token quotas on Gemini models:
+<p align="center">
+  <img src="docs/images/webui-guided-tour.png" alt="Guided Tour, mission 4: Hit the limit" width="100%">
+</p>
 
-```
-┌─────────────────────────┐     ┌────────────────────────┐     ┌────────────────────────┐
-│  1. Select App & Tier   │ ──► │  2. Pick Prompt Preset │ ──► │  3. Send or Burst Test │
-│ (Silver: 4k / Gold: 40k)│     │  (Light/Medium/Burner) │     │ (Real-time Gateway Call)│
-└─────────────────────────┘     └────────────────────────┘     └────────────────────────┘
-                                                                            │
-                                                                            ▼
-┌─────────────────────────┐     ┌────────────────────────┐     ┌────────────────────────┐
-│ 6. Multi-Dim Analytics  │ ◄── │  5. Tier SLA Upgrade   │ ◄── │  4. Observe Quota 429  │
-│(App/Dept/Product Charts)│     │(Gold Tier 40k Capacity)│     │ (Bar Turns Red + Alert)│
-└─────────────────────────┘     └────────────────────────┘     └────────────────────────┘
-```
+A spotlight-and-coachmark tour, in the same style as the Model Armor and Coffee Shop demos. It opens automatically on the first visit in each browser session and can be reopened from **🗺️ Guided Tour** in the header.
 
-#### Step 1: Select a Consumer Application & Review Tier Limits
-1. On the left-hand panel (**Select Consumer Application**), pick an app. (You can click and drag the vertical splitter bar to resize this panel).
-2. Choose a **Basic App (Silver Tier)**:
-   * `Smart TV App` (Department: *Manufacturing*, Sub-department: *Smart TV division*)
-   * **Active Quota**: **4,000 tokens / 5 minutes**.
-3. Notice the **Active Quota** bar at the top of the main card displays rolling 5-minute token consumption (`0 / 4,000 tokens consumed (0%)`).
+| # | Mission | What the user does | Completes when |
+| :--- | :--- | :--- | :--- |
+| 1 | Meet the architecture | Opens the architecture diagram | The diagram opens |
+| 2 | Pick a scenario | Opens ⚙️ Settings and applies a preset | **Apply scenario** is clicked |
+| 3 | Send a prompt | Picks a 4K profile and sends one *Light Query* | The request returns |
+| 4 | Hit the limit | Bursts the *Heavy Quota Burner* prompt on a 4K profile | A call returns **HTTP 429** |
+| 5 | Compare tiers | Repeats the burst on a 40K profile | Every call returns **200** |
+| 6 | See the analytics | Opens Admin Analytic and switches to **App-Specific** | The tab is clicked |
 
-#### Step 2: Choose a Prompt Preset
-Select one of the calibrated prompt presets to evaluate token consumption:
-* ⚡ **Light Query** (`~30 tokens`): Quick question (`Summarize how Apigee secures Gemini AI APIs in 2 short bullet points`).
-* 📝 **Medium Analysis** (`~350 tokens`): Technical analysis prompt (`Analyze microservices latency in multi-region deployments`).
-* 💥 **Heavy Quota Burner** (`~1,500 - 2,500 tokens`): Heavy engineering prompt designed to rapidly consume quota headroom.
+* The tour sets up each step for you (profile, prompt preset, burst size), and step text uses the active scenario's labels.
+* After each mission, a **"What just happened?"** panel explains the policy flow using numbers from your actual run.
+* Progress is saved in the browser, so a reload resumes where you left off. **☰ Missions** jumps to any mission.
+* URL options: `?tour=limit` (or any mission id: `architecture`, `scenario`, `single`, `limit`, `tiers`, `analytics`) starts at that mission; `?tour=0` stops the welcome screen from opening automatically.
 
-#### Step 3: Simulate Traffic (Single Request vs. Burst Load)
-* **Single Request**: Click **`🚀 Send Single Request`**.
-  * Apigee verifies the API Key, queries Gemini 3.5 Flash Lite on Vertex AI (global endpoint), extracts `promptTokenCount` and `candidatesTokenCount` from the response, logs analytics telemetry via `DataCapture`, and increments the distributed quota counter.
-  * The **Active Quota** progress bar updates immediately to reflect the new token count.
-  * The **Gateway Response & Token Telemetry** pane displays the Gemini response text along with a detailed token ledger: **Prompt Tokens**, **Response Tokens**, **Total Tokens**, and **Gateway Latency**.
-* **Burst Simulation**: Click **`⚡ Simulate Burst (Auto-Exhaust Quota)`**.
-  * Select between `3`, `5`, or `10` rapid-fire requests from the dropdown.
-  * The UI triggers concurrent or rapid sequential requests against the Apigee Gateway.
-
-#### Step 4: Observe Token Quota Breach & HTTP 429 Response
-1. With the **Silver Tier (4,000 tokens)** app selected, trigger a 3-call burst using the *Heavy Quota Burner* preset.
-2. In **2 to 3 calls**, the cumulative token count crosses 4,000 tokens.
-3. Apigee's `LLMTokenQuota-Enforce` policy evaluates the rolling token counter and rejects subsequent calls with:
-   * **HTTP Status**: `429 Too Many Requests`
-   * **Fault Code**: `policies.ratelimit.QuotaViolation`
-   * **Error Message**: `LLM Token Quota Exceeded: Your application has exceeded its allowed token rate limit.`
-4. The UI immediately transitions:
-   * Progress bar turns **Crimson Red (100% / Exhausted)**.
-   * Status indicator updates to **⚠️ Quota Exhausted (429 Active)**.
-   * An upgrade banner suggests switching to a **Gold Tier** consumer application.
-
-#### Step 5: Upgrade to Premium Tier App (Gold Tier)
-1. In the left panel, click on `Network Core App` or `Network Wireless App` (**Gold Tier - 40,000 tokens / 5 mins**).
-2. Re-run the identical burst simulation.
-3. The requests succeed effortlessly because the application has **10x the token capacity**, illustrating how enterprises can tier API products and monetize LLM capabilities based on token quotas.
-
-#### Step 6: Explore Multi-Dimensional Admin Analytics
-1. Click the **Admin Analytic (aggregated)** button at the top header or the floating tab on the right edge.
-2. Select a time window: `Last 1 Hour`, `Last 1 Day`, `Last 3 Days`, or `Last 7 Days`.
-3. View interactive charts powered by Chart.js:
-   * **By API Product**: Compare token volume consumed by `Gemini-Silver-Tier` vs `Gemini-Gold-Tier`.
-   * **By Developer App**: Identify which specific application is consuming the highest token volume.
-   * **By Department**: Breakdown across business units (`Manufacturing` vs `Network`).
-   * **By Sub-Department**: Drill down into operational divisions (`Smart TV`, `AudioSignal`, `Core division`, `Wireless division`).
-   * **Timeline Trend**: Hourly / daily token usage trends and peak traffic spikes.
-4. Review the **Audit Transaction Ledger**: A granular table listing recent API requests, prompt/response token breakdowns, latency, and quota compliance status.
-
-#### Step 7: Reset Demo Baseline
-* At any time, click the **Reset Session** button in the header to purge live test traffic and restore the clean 7-day demo baseline.
+Source: [`web-ui/static/tour/`](web-ui/static/tour/) — `tour-engine.js` (rendering and sequencing), `tour-missions.js` (mission content), `tour.css` (styles).
 
 ---
 
-### 🚀 Launching the Web UI
+### ⚙️ Scenario Settings (display labels only)
 
-#### Option A: Direct Access via Cloud Run (Secured with IAP)
-The UI is deployed directly to **Google Cloud Run** in `asia-southeast1` within project `YOUR_GCP_PROJECT_ID` secured with **Identity-Aware Proxy (IAP)**:
+The same two API products and four developer apps can tell different stories. Pick a preset in **⚙️ Settings**, or choose **Custom** to type your own names. **Reset to original** returns to the default.
+
+| Preset | 4K product shown as | 40K product shown as | The 4 apps shown as |
+| :--- | :--- | :--- | :--- |
+| 👩‍💻 **Engineering Team** (default) | Engineer | Senior Engineer | Ethan, Joshua, Mike, Ken |
+| 💳 **SaaS Customer Plans** | Free Plan | Enterprise Plan | Acme Startup, Bluebird Studio, Contoso Bank, Globex Retail |
+| 🏦 **Banking Staff** | Relationship Manager | Private Banker | Sarah, David, Grace, Daniel |
+| 🎓 **University** | Student | Professor | Alice, Ben, Dr. Chen, Prof. Davis |
+| 📡 **High Tech Manufacturing Department** | Silver | Gold | Smart TV App, Audio Signal App, Network Core App, Network Wireless App |
+
+Each preset also renames the two custom attribute labels (e.g. *Team* / *Squad*) and swaps the sample prompts.
+
+> [!NOTE]
+> Settings only change what the browser displays. The Apigee API products, developer apps, quotas and custom attribute values are not modified, and the choice is stored in the browser's `localStorage`. Presets are defined in [`web-ui/static/js/scenarios.js`](web-ui/static/js/scenarios.js).
+
+---
+
+### 📖 Step-by-Step Demo Script
+
+The Guided Tour covers the same flow. Labels below use the default **Engineering Team** preset.
+
+```
+┌──────────────────────────┐     ┌─────────────────────────┐     ┌─────────────────────────┐
+│ 1. Pick a profile        │ ──► │ 2. Pick a prompt preset │ ──► │ 3. Send or burst        │
+│ (Engineer 4K / Senior 40K)│    │ (Light / Medium / Heavy)│     │ (real Apigee calls)     │
+└──────────────────────────┘     └─────────────────────────┘     └─────────────────────────┘
+                                                                              │
+                                                                              ▼
+┌──────────────────────────┐     ┌─────────────────────────┐     ┌─────────────────────────┐
+│ 6. Admin Analytic        │ ◄── │ 5. Compare with 40K     │ ◄── │ 4. Hit HTTP 429         │
+│ (Aggregated/App-Specific)│     │ (same burst, all 200s)  │     │ (meter turns red)       │
+└──────────────────────────┘     └─────────────────────────┘     └─────────────────────────┘
+```
+
+#### Step 1: Pick a profile
+1. In the left panel, pick a profile. **Ethan** and **Joshua** use the 4K product (`Gemini-Silver-Tier`); **Mike** and **Ken** use the 40K product (`Gemini-Gold-Tier`). Drag the vertical splitter to resize the panel.
+2. The quota meter below shows the selected app's rolling usage, e.g. `0 / 4,000 (0.0%)`.
+
+#### Step 2: Choose a prompt preset
+* ⚡ **Light Query** (`~30 tokens`): a short question.
+* 📝 **Medium Analysis** (`~350 tokens`): a short technical analysis.
+* 💥 **Heavy Quota Burner** (`~1,500 - 2,500 tokens`): a long design-document prompt that uses up a 4K budget quickly.
+
+#### Step 3: Send traffic
+* **Send Single Request**: Apigee verifies the API key, checks the budget, calls Gemini 3.5 Flash Lite (`global` endpoint), debits `totalTokenCount`, and records telemetry. The response panel shows the answer and token counts; the quota meter then updates.
+* **Simulate Burst**: sends 3, 4, 5 or 8 calls in a row (choose in **Burst Calls**) and stops at the first 429.
+
+#### Step 4: Hit the limit (HTTP 429)
+1. Select **Ethan** (4K), choose **Heavy Quota Burner**, and run a burst of 3 to 5 calls.
+2. After 2 or 3 calls the budget is used up and `LLMTokenQuota-Enforce` rejects the next call before Gemini is invoked:
+   * **HTTP status**: `429`, `"status": "RESOURCE_EXHAUSTED"`
+   * **Message**: `LLM Token Quota limit exceeded for your tier. Please retry after your 5-minute quota window resets.`
+3. The meter turns red, the status shows **Quota Exhausted (HTTP 429)**, and the alert offers a quick switch to a 40K profile.
+
+#### Step 5: Compare with the 40K product
+Select **Mike** or **Ken** and run the same burst. Every call succeeds, because `Gemini-Gold-Tier` allows 10× the tokens. Same proxy, same policies; only the API product differs.
+
+#### Step 6: Explore Admin Analytic
+1. Click **📊 Admin Analytic** in the header (or the tab on the right edge).
+2. **Aggregated** tab: pick a window (`Last 1 Hour`, `1 Day`, `3 Days`, `7 Days`) and review:
+   * KPIs: total requests, total tokens, quota violations (429s), average latency.
+   * Tokens by API product, by developer app, and by the two custom attributes.
+   * Token consumption timeline and the **Detailed Transaction Audit Ledger**.
+3. **App-Specific** tab: pick one app to see its calls, tokens, live 5-minute quota status, latency and hourly token velocity.
+4. **Reset Demo Data** (Aggregated tab) clears live test traffic and restores the 7-day demo baseline.
+
+---
+
+## 🏛️ Updating the Architecture Diagram
+
+`docs/images/architecture.png` (also copied to `web-ui/static/assets/architecture.png` for the in-app pop-up) is rendered from an editable HTML source, so text stays crisp and logos are the real ones:
+
+```bash
+# 1. Edit docs/diagram/architecture.html
+# 2. Render it with headless Chrome (2x for sharp text)
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars \
+  --allow-file-access-from-files --force-device-scale-factor=2 --window-size=1600,560 \
+  --screenshot=docs/images/architecture.png "file://$PWD/docs/diagram/architecture.html"
+# 3. Copy it into the Web UI
+cp docs/images/architecture.png web-ui/static/assets/architecture.png
+```
+
+If you change the canvas height, update the `--window-size` height, `html, body { height }` and the arrow `<svg viewBox>` in the HTML together so the arrows stay aligned.
+
+---
+
+## 🚀 Launching the Web UI
+
+### Option A: Cloud Run (secured with IAP)
+The UI is deployed to **Google Cloud Run** in `asia-southeast1` within project `YOUR_GCP_PROJECT_ID`, secured with **Identity-Aware Proxy (IAP)**:
 * **Service Name**: `apigee-token-limit-demo-ui`
 * **Region**: `asia-southeast1`
 * **Direct Cloud Run URL**: **[https://apigee-token-limit-demo-ui-PROJECT_NUMBER.asia-southeast1.run.app](https://apigee-token-limit-demo-ui-PROJECT_NUMBER.asia-southeast1.run.app)**
-* **Authentication**: Google Identity-Aware Proxy (IAP). Simply open the URL while logged into your authorized Google Cloud account.
+* **Authentication**: Google Identity-Aware Proxy (IAP). Open the URL while signed in with an authorized Google account.
 
-#### Option B: Local Development Launch
-To launch locally on your machine:
+To deploy a new revision from source (keeps the existing IAP, scaling and service account settings):
+```bash
+gcloud run deploy apigee-token-limit-demo-ui \
+  --source web-ui \
+  --region asia-southeast1 \
+  --project YOUR_APIGEE_ORG
+```
+
+> [!NOTE]
+> Each environment keeps its own transaction ledger (SQLite inside the container), so Admin Analytic on Cloud Run and on your laptop show different live traffic.
+
+### Option B: Local
 ```bash
 ./run-ui.sh
 
 # Or specify a custom port:
 PORT=8089 ./run-ui.sh
 ```
-Then open **[http://localhost:8089](http://localhost:8089)** in your web browser.
+Then open **[http://localhost:8089](http://localhost:8089)** in your browser.
 
 ---
 
+## 📁 Repository Layout
+
+| Path | Contents |
+| :--- | :--- |
+| `gemini-token-limit-demo/apiproxy/` | Apigee proxy bundle (policies, proxy and target endpoints, JavaScript) |
+| `products/` | API product definitions (`Gemini-Silver-Tier`, `Gemini-Gold-Tier`) |
+| `apps/` | Developer app definitions with custom attributes |
+| `deploy.sh` | Upload and deploy the proxy with `apigeecli` |
+| `setup-products-and-apps.sh` | Create the API products and developer apps |
+| `test-quota.sh` | Command-line verification of all 4 apps and error handling |
+| `run-ui.sh` | Start the Web UI locally |
+| `web-ui/` | Flask app (`app.py`), `Dockerfile`, and static front end (`static/`) |
+| `web-ui/static/js/scenarios.js` | ⚙️ Settings presets |
+| `web-ui/static/tour/` | Guided Tour engine, missions and styles |
+| `docs/diagram/architecture.html` | Editable source for the architecture diagram |
+| `docs/images/` | Architecture diagram and Web UI screenshots |
