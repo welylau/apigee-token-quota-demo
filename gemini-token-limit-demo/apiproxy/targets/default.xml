@@ -26,6 +26,6 @@
             <Property name="connect.timeout.millis">30000</Property>
             <Property name="io.timeout.millis">60000</Property>
         </Properties>
-        <URL>https://asia-southeast1-aiplatform.googleapis.com/v1/projects/YOUR_GCP_PROJECT_ID/locations/asia-southeast1/publishers/google/models/gemini-2.5-flash:generateContent</URL>
+        <URL>https://aiplatform.googleapis.com/v1/projects/YOUR_GCP_PROJECT_ID/locations/global/publishers/google/models/gemini-3.5-flash-lite:generateContent</URL>
     </HTTPTargetConnection>
 </TargetEndpoint>

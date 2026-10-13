@@ -1,6 +1,6 @@
 # Apigee LLM Token Quota & AI Telemetry Demo (`gemini-token-limit-demo`)
 
-This repository contains the complete Apigee API Proxy bundle, declarative API Product configurations, and Developer App definitions with custom attributes for **LLM Token Quota Governance** and **AI Analytics Data Collection** connecting to Google Vertex AI Gemini in `asia-southeast1`.
+This repository contains the complete Apigee API Proxy bundle, declarative API Product configurations, and Developer App definitions with custom attributes for **LLM Token Quota Governance** and **AI Analytics Data Collection** connecting to Google Vertex AI Gemini 3.5 Flash Lite via the `global` endpoint.
 
 Deployed and operational in Apigee organization: **`YOUR_APIGEE_ORG`** (Environment: **`default-dev`**).
 
@@ -9,7 +9,7 @@ Deployed and operational in Apigee organization: **`YOUR_APIGEE_ORG`** (Environm
 ## 🏛️ Architecture Diagram & Policy Flow
 
 <p align="center">
-  <img src="docs/images/architecture.jpg" alt="Apigee X LLM Token Quota & AI Governance Architecture" width="100%">
+  <img src="docs/images/architecture.png" alt="Apigee X LLM Token Quota & AI Governance Architecture" width="100%">
 </p>
 
 ### End-to-End Policy Execution Pipeline
@@ -21,7 +21,7 @@ sequenceDiagram
     autonumber
     actor Client as Consumer App (e.g. Smart TV App)
     participant GW as Apigee Gateway (gemini-token-limit-demo)
-    participant VertexAI as Vertex AI (asia-southeast1)
+    participant VertexAI as Vertex AI (global)
     participant Analytics as Apigee Analytics Engine
 
     Client->>GW: POST /gemini-token-limit-demo/<br/>Header: x-api-key, Body: prompt
@@ -29,7 +29,7 @@ sequenceDiagram
     alt Token Quota Exceeded (> 4k Silver / > 40k Gold per 5 mins)
         GW-->>Client: 429 Too Many Requests (RESOURCE_EXHAUSTED)
     else Quota Available
-        GW->>VertexAI: POST gemini-2.5-flash:generateContent<br/>Auth: GoogleAccessToken (roles/aiplatform.user)
+        GW->>VertexAI: POST gemini-3.5-flash-lite:generateContent<br/>Auth: GoogleAccessToken (roles/aiplatform.user)
         VertexAI-->>GW: 200 OK (usageMetadata with prompt, candidate, and total tokens)
         Note over GW: 4. LLMTokenQuota-Count (Debits total tokens from rolling counter)<br/>5. JS-ExtractAiTokens (Parses usageMetadata & Dept attributes)<br/>6. DC-AiTelemetry (Dispatches data to Data Collectors)
         GW-)Analytics: Asynchronously record dc_ai_model, dc_ai_*_tokens, dc_department, dc_sub_department
@@ -97,7 +97,7 @@ Configured in `DC-AiTelemetry.xml` and registered in `YOUR_APIGEE_ORG`:
 
 | Data Collector Name | Type | Description | Source Flow Variable |
 | :--- | :--- | :--- | :--- |
-| **`dc_ai_model`** | `STRING` | LLM Model Name | `ai.model` (`gemini-2.5-flash`) |
+| **`dc_ai_model`** | `STRING` | LLM Model Name | `ai.model` (`gemini-3.5-flash-lite`) |
 | **`dc_ai_prompt_token_count`** | `INTEGER` | Input / Prompt tokens | `ai.promptTokenCount` |
 | **`dc_ai_response_token_count`** | `INTEGER` | Generated / Completion tokens | `ai.responseTokenCount` |
 | **`dc_ai_total_token_count`** | `INTEGER` | Total tokens consumed | `ai.totalTokenCount` |
@@ -207,7 +207,7 @@ curl -k -i -X POST "https://YOUR_APIGEE_GATEWAY_HOST/gemini-token-limit-demo/" \
     "candidatesTokenCount": 27,
     "totalTokenCount": 42
   },
-  "modelVersion": "gemini-2.5-flash"
+  "modelVersion": "gemini-3.5-flash-lite"
 }
 ```
 
@@ -276,7 +276,7 @@ Select one of the calibrated prompt presets to evaluate token consumption:
 
 #### Step 3: Simulate Traffic (Single Request vs. Burst Load)
 * **Single Request**: Click **`🚀 Send Single Request`**.
-  * Apigee verifies the API Key, queries Gemini 2.5 Flash on Vertex AI, extracts `promptTokenCount` and `candidatesTokenCount` from the response, logs analytics telemetry via `DataCapture`, and increments the distributed quota counter.
+  * Apigee verifies the API Key, queries Gemini 3.5 Flash Lite on Vertex AI (global endpoint), extracts `promptTokenCount` and `candidatesTokenCount` from the response, logs analytics telemetry via `DataCapture`, and increments the distributed quota counter.
   * The **Active Quota** progress bar updates immediately to reflect the new token count.
   * The **Gateway Response & Token Telemetry** pane displays the Gemini response text along with a detailed token ledger: **Prompt Tokens**, **Response Tokens**, **Total Tokens**, and **Gateway Latency**.
 * **Burst Simulation**: Click **`⚡ Simulate Burst (Auto-Exhaust Quota)`**.
@@ -301,7 +301,7 @@ Select one of the calibrated prompt presets to evaluate token consumption:
 3. The requests succeed effortlessly because the application has **10x the token capacity**, illustrating how enterprises can tier API products and monetize LLM capabilities based on token quotas.
 
 #### Step 6: Explore Multi-Dimensional Admin Analytics
-1. Click the **Admin Analytics** tab at the top header.
+1. Click the **Admin Analytic (aggregated)** button at the top header or the floating tab on the right edge.
 2. Select a time window: `Last 1 Hour`, `Last 1 Day`, `Last 3 Days`, or `Last 7 Days`.
 3. View interactive charts powered by Chart.js:
    * **By API Product**: Compare token volume consumed by `Gemini-Silver-Tier` vs `Gemini-Gold-Tier`.

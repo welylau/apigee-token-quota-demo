@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<!--
+  Source for docs/images/architecture.png
+  Render (from repo root):
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars \
+      --force-device-scale-factor=2 --window-size=1600,560 \
+      --screenshot=docs/images/architecture.png docs/diagram/architecture.html
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  :root {
+    --blue: #1A73E8; --blue-700: #1967D2; --blue-50: #E8F0FE; --blue-200: #AECBFA;
+    --gray-900: #202124; --gray-700: #5F6368; --gray-300: #DADCE0; --gray-100: #F1F3F4;
+    --green: #188038; --green-50: #E6F4EA; --green-200: #A8DAB5;
+    --red: #C5221F; --red-50: #FCE8E6; --red-200: #F6AEA9;
+    --yellow-50: #FEF7E0; --yellow-200: #FDE293; --amber: #B06000;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1600px; height: 560px; background: #fff; overflow: hidden; }
+  body {
+    font-family: 'Google Sans', 'Plus Jakarta Sans', -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: var(--gray-900);
+    position: relative;
+  }
+  code, .mono { font-family: 'JetBrains Mono', 'Roboto Mono', Menlo, monospace; }
+
+  .title { position: absolute; left: 48px; top: 26px; display: flex; align-items: baseline; gap: 14px; }
+  .title h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.3px; }
+
+  .panel {
+    position: absolute;
+    border: 2px solid var(--gray-300);
+    border-radius: 16px;
+    background: #fff;
+    padding: 20px;
+  }
+  .panel-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; white-space: nowrap; }
+  .panel-head img { width: 30px; height: 30px; flex-shrink: 0; }
+  .panel-head h2 { font-size: 19px; font-weight: 700; white-space: nowrap; }
+  .pill {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--gray-100);
+    color: var(--gray-700);
+    white-space: nowrap;
+  }
+
+  /* 1. Developer Apps */
+  .consumers { left: 48px; top: 92px; width: 320px; height: 428px; display: flex; flex-direction: column; }
+  .tier {
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    border: 2px solid;
+  }
+  .tier.silver { background: var(--gray-100); border-color: var(--gray-300); }
+  .tier.gold { background: var(--yellow-50); border-color: var(--yellow-200); }
+  .tier-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .tier-head b { font-size: 16px; }
+  .tier.gold .tier-head b { color: var(--amber); }
+  .tier-head .quota {
+    font-size: 13px; font-weight: 700;
+    background: #fff; padding: 3px 9px; border-radius: 999px;
+    border: 1px solid var(--gray-300);
+  }
+  .tier.gold .tier-head .quota { border-color: var(--yellow-200); color: var(--amber); }
+  .apps-row { display: flex; gap: 8px; }
+  .app {
+    flex: 1;
+    background: #fff;
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .attr-bar {
+    margin-top: auto;
+    background: var(--blue-50);
+    border: 1.5px solid var(--blue-200);
+    color: var(--blue-700);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 13.5px;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  /* 2. Apigee X */
+  .apigee {
+    left: 468px; top: 92px; width: 640px; height: 428px;
+    border-color: var(--blue);
+    background: #FAFCFF;
+    display: flex;
+    flex-direction: column;
+  }
+  .apigee .pill { background: var(--blue-50); color: var(--blue-700); }
+
+  .products { display: flex; gap: 14px; margin-bottom: 16px; }
+  .product {
+    flex: 1;
+    border-radius: 12px;
+    padding: 12px 16px;
+    border: 2px solid;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .product.silver { background: var(--gray-100); border-color: var(--gray-300); }
+  .product.gold { background: var(--yellow-50); border-color: var(--yellow-200); }
+  .product .name { font-size: 14.5px; font-weight: 700; }
+  .product .q {
+    font-size: 13px; font-weight: 700;
+    background: #fff; padding: 3px 9px; border-radius: 999px;
+    border: 1px solid var(--gray-300);
+  }
+  .product.gold .q { border-color: var(--yellow-200); color: var(--amber); }
+
+  .proxy {
+    flex: 1;
+    border: 2px solid var(--blue-200);
+    border-radius: 14px;
+    background: #fff;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .lanes { display: flex; gap: 16px; }
+  .lane { flex: 1; }
+  .lane-label {
+    font-size: 12px; font-weight: 700; letter-spacing: .8px;
+    text-transform: uppercase; margin-bottom: 10px;
+  }
+  .lane.req .lane-label { color: var(--blue-700); }
+  .lane.res .lane-label { color: var(--green); }
+
+  .step {
+    display: flex; gap: 12px; align-items: center;
+    border: 2px solid var(--gray-300);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    background: #fff;
+  }
+  .step:last-child { margin-bottom: 0; }
+  .num {
+    flex-shrink: 0;
+    width: 28px; height: 28px; border-radius: 50%;
+    color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .lane.req .num { background: var(--blue); }
+  .lane.res .num { background: var(--green); }
+  .step .p { font-size: 14px; font-weight: 700; }
+  .step .d { font-size: 12.5px; color: var(--gray-700); font-weight: 500; margin-top: 2px; }
+  .lane.req .step.enforce { border-color: var(--red-200); background: #FFFDFD; }
+
+  .fault {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: var(--red-50);
+    border: 1.5px dashed var(--red-200);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 13.5px;
+    color: var(--red);
+    font-weight: 700;
+  }
+
+  /* 3. Vertex AI */
+  .vertex { left: 1208px; top: 92px; width: 344px; height: 196px; display: flex; flex-direction: column; }
+  .model {
+    flex: 1;
+    background: var(--blue-50);
+    border: 2px solid var(--blue-200);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+  }
+  .model .m { font-size: 19px; font-weight: 700; color: var(--blue-700); }
+  .model .e { font-size: 13.5px; color: var(--gray-700); font-weight: 600; }
+
+  /* 4. Analytics */
+  .analytics {
+    left: 1208px; top: 316px; width: 344px; height: 204px;
+    border-color: var(--green-200);
+    display: flex; flex-direction: column;
+  }
+  .dims {
+    flex: 1;
+    background: var(--green-50);
+    border: 2px solid var(--green-200);
+    border-radius: 12px;
+    padding: 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    align-items: center;
+  }
+  .dim {
+    font-size: 13px;
+    background: #fff;
+    color: var(--green);
+    border: 1.5px solid var(--green-200);
+    border-radius: 8px;
+    padding: 8px 6px;
+    font-weight: 700;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  /* Arrows */
+  svg.arrows { position: absolute; inset: 0; width: 1600px; height: 560px; pointer-events: none; }
+  .alabel {
+    position: absolute;
+    font-size: 12.5px;
+    font-weight: 700;
+    background: #fff;
+    padding: 2px 7px;
+    border-radius: 6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="title">
+  <h1>Apigee X — Gemini Token Quota</h1>
+</div>
+
+<!-- 1. Developer Apps -->
+<div class="panel consumers">
+  <div class="panel-head">
+    <span style="font-size:26px">👥</span>
+    <h2>Developer Apps</h2>
+    <span class="pill mono">x-api-key</span>
+  </div>
+
+  <div class="tier silver">
+    <div class="tier-head"><b>Silver Tier</b><span class="quota">4K / 5m</span></div>
+    <div class="apps-row">
+      <div class="app">👤 App 1</div>
+      <div class="app">👤 App 2</div>
+    </div>
+  </div>
+
+  <div class="tier gold">
+    <div class="tier-head"><b>Gold Tier</b><span class="quota">40K / 5m</span></div>
+    <div class="apps-row">
+      <div class="app">⭐ App 3</div>
+      <div class="app">⭐ App 4</div>
+    </div>
+  </div>
+
+  <div class="attr-bar">🏷️ Custom Attributes</div>
+</div>
+
+<!-- 2. Apigee X -->
+<div class="panel apigee">
+  <div class="panel-head">
+    <img src="../../web-ui/static/assets/apigee-logo.svg" alt="">
+    <h2>Apigee X</h2>
+    <span class="pill mono">gemini-token-limit-demo</span>
+  </div>
+
+  <div class="products">
+    <div class="product silver">
+      <span class="name mono">Gemini-Silver-Tier</span>
+      <span class="q">4K / 5m</span>
+    </div>
+    <div class="product gold">
+      <span class="name mono">Gemini-Gold-Tier</span>
+      <span class="q">40K / 5m</span>
+    </div>
+  </div>
+
+  <div class="proxy">
+    <div class="lanes">
+      <div class="lane req">
+        <div class="lane-label">Request</div>
+        <div class="step">
+          <div class="num">1</div>
+          <div><div class="p mono">VerifyAPIKey</div><div class="d">Key &amp; Attributes</div></div>
+        </div>
+        <div class="step enforce">
+          <div class="num">2</div>
+          <div><div class="p mono">LLMTokenQuota</div><div class="d">Enforce Budget</div></div>
+        </div>
+      </div>
+      <div class="lane res">
+        <div class="lane-label">Response</div>
+        <div class="step">
+          <div class="num">3</div>
+          <div><div class="p mono">LLMTokenQuota</div><div class="d">Count Tokens</div></div>
+        </div>
+        <div class="step">
+          <div class="num">4</div>
+          <div><div class="p mono">DC-AiTelemetry</div><div class="d">Capture Metrics</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="fault">⛔ Over Quota → HTTP 429</div>
+  </div>
+</div>
+
+<!-- 3. Vertex AI -->
+<div class="panel vertex">
+  <div class="panel-head">
+    <img src="../../web-ui/static/assets/gcp-logo.svg" alt="">
+    <h2>Vertex AI</h2>
+    <span class="pill mono">global</span>
+  </div>
+  <div class="model">
+    <div class="m">✦ Gemini 3.5 Flash Lite</div>
+    <div class="e mono">:generateContent</div>
+  </div>
+</div>
+
+<!-- 4. Analytics -->
+<div class="panel analytics">
+  <div class="panel-head">
+    <span style="font-size:26px">📊</span>
+    <h2>Apigee Analytics</h2>
+  </div>
+  <div class="dims">
+    <span class="dim">Token Usage</span>
+    <span class="dim">API Product</span>
+    <span class="dim">Developer App</span>
+    <span class="dim">Custom Attributes</span>
+  </div>
+</div>
+
+<!-- Arrows -->
+<svg class="arrows" viewBox="0 0 1600 560">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#202124"/></marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#C5221F"/></marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#188038"/></marker>
+  </defs>
+  <!-- App -> Apigee -->
+  <line x1="370" y1="240" x2="462" y2="240" stroke="#202124" stroke-width="3" marker-end="url(#ah)"/>
+  <!-- 429 back to app -->
+  <line x1="466" y1="480" x2="374" y2="480" stroke="#C5221F" stroke-width="3" stroke-dasharray="7 6" marker-end="url(#ahr)"/>
+  <!-- Apigee -> Vertex -->
+  <line x1="1110" y1="165" x2="1202" y2="165" stroke="#202124" stroke-width="3" marker-end="url(#ah)"/>
+  <!-- Vertex -> Apigee -->
+  <line x1="1202" y1="225" x2="1114" y2="225" stroke="#202124" stroke-width="3" marker-end="url(#ah)"/>
+  <!-- Apigee -> Analytics -->
+  <line x1="1110" y1="420" x2="1202" y2="420" stroke="#188038" stroke-width="3" stroke-dasharray="7 6" marker-end="url(#ahg)"/>
+</svg>
+<div class="alabel" style="left:392px; top:212px">Prompt</div>
+<div class="alabel" style="left:396px; top:452px; color:#C5221F">429</div>
+<div class="alabel" style="left:1126px; top:138px">Prompt</div>
+<div class="alabel" style="left:1126px; top:232px">Tokens</div>
+<div class="alabel" style="left:1124px; top:392px; color:#188038">Metrics</div>
+
+</body>
+</html>

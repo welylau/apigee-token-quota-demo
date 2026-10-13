@@ -3,7 +3,7 @@
     <DisplayName>DC-AiTelemetry</DisplayName>
     <Capture>
         <DataCollector>dc_ai_model</DataCollector>
-        <Collect ref="ai.model" default="gemini-2.5-flash"/>
+        <Collect ref="ai.model" default="gemini-3.5-flash-lite"/>
     </Capture>
     <Capture>
         <DataCollector>dc_ai_prompt_token_count</DataCollector>

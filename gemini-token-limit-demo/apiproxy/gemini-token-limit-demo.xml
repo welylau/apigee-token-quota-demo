@@ -3,7 +3,7 @@
     <Basepaths>/gemini-token-limit-demo</Basepaths>
     <ConfigurationVersion majorVersion="4" minorVersion="0"/>
     <DisplayName>gemini-token-limit-demo</DisplayName>
-    <Description>Apigee proxy routing to Gemini Flash 2.5 Lite in asia-southeast1 with VerifyAPIKey, LLMTokenQuota, and AI Data Collectors</Description>
+    <Description>Apigee proxy routing to Gemini 3.5 Flash-Lite via the Vertex AI global endpoint with VerifyAPIKey, LLMTokenQuota, and AI Data Collectors</Description>
     <Policies>
         <Policy>AM-Extract-APIKey</Policy>
         <Policy>VerifyAPIKey</Policy>

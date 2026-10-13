@@ -3,7 +3,7 @@
     <DisplayName>LLM Token Quota Enforce</DisplayName>
     <SharedName>gemini-token-quota</SharedName>
     <EnforceOnly>true</EnforceOnly>
-    <LLMModelSource>gemini-2.5-flash</LLMModelSource>
+    <LLMModelSource>gemini-3.5-flash-lite</LLMModelSource>
     <Identifier ref="verifyapikey.VerifyAPIKey.client_id"/>
     <UseQuotaConfigInAPIProduct stepName="VerifyAPIKey">
         <DefaultConfig>

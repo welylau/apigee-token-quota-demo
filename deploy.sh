@@ -8,11 +8,10 @@ set -e
 ORG="${APIGEE_ORG:-YOUR_APIGEE_ORG}"
 ENV="${APIGEE_ENV:-default-dev}"
 PROXY_NAME="gemini-token-limit-demo"
-ACCOUNT="${GCP_ACCOUNT:-developer@example.com}"
 RUNTIME_SA="${APIGEE_RUNTIME_SA:-sa-apigee-aiservices@YOUR_GCP_PROJECT_ID.iam.gserviceaccount.com}"
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TOKEN=$(gcloud auth print-access-token --account "$ACCOUNT")
+TOKEN=$(gcloud auth print-access-token)
 
 echo "📦 Uploading API Proxy Bundle '$PROXY_NAME' to Apigee Org '$ORG'..."
 apigeecli apis create bundle \

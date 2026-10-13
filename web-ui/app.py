@@ -7,6 +7,7 @@ Provides simulation runner, token exhaustion demo, and multidimensional analytic
 import os
 import time
 import json
+import random
 import sqlite3
 import datetime
 import subprocess
@@ -31,6 +32,9 @@ DEV_EMAIL = os.environ.get("APIGEE_DEV_EMAIL", "developer@example.com")
 PORT = int(os.environ.get("PORT", 8089))
 DB_PATH = os.path.join(os.path.dirname(__file__), "data", "transactions.db")
 
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 # Pre-configured Apps matching YOUR_APIGEE_ORG deployment
 APPS = {
     "Gemini-Basic-Mfg-SmartTV-App": {
@@ -40,7 +44,7 @@ APPS = {
         "product": "Gemini-Silver-Tier",
         "quotaLimit": 4000,
         "quotaWindowMinutes": 5,
-        "apiKey": "YOUR_SMART_TV_APP_API_KEY",
+        "apiKey": os.environ.get("KEY_SMART_TV", "YOUR_SMART_TV_APP_API_KEY"),
         "department": "Manufacturing",
         "subDepartment": "Smart TV division",
         "badgeColor": "silver",
@@ -54,7 +58,7 @@ APPS = {
         "product": "Gemini-Silver-Tier",
         "quotaLimit": 4000,
         "quotaWindowMinutes": 5,
-        "apiKey": "YOUR_AUDIO_SIGNAL_APP_API_KEY",
+        "apiKey": os.environ.get("KEY_AUDIO", "YOUR_AUDIO_SIGNAL_APP_API_KEY"),
         "department": "Manufacturing",
         "subDepartment": "AudioSignal division",
         "badgeColor": "silver",
@@ -68,7 +72,7 @@ APPS = {
         "product": "Gemini-Gold-Tier",
         "quotaLimit": 40000,
         "quotaWindowMinutes": 5,
-        "apiKey": "YOUR_NETWORK_CORE_APP_API_KEY",
+        "apiKey": os.environ.get("KEY_NETWORK_CORE", "YOUR_NETWORK_CORE_APP_API_KEY"),
         "department": "Network",
         "subDepartment": "Core division",
         "badgeColor": "gold",
@@ -82,7 +86,7 @@ APPS = {
         "product": "Gemini-Gold-Tier",
         "quotaLimit": 40000,
         "quotaWindowMinutes": 5,
-        "apiKey": "YOUR_NETWORK_WIRELESS_APP_API_KEY",
+        "apiKey": os.environ.get("KEY_NETWORK_WIRELESS", "YOUR_NETWORK_WIRELESS_APP_API_KEY"),
         "department": "Network",
         "subDepartment": "Wireless division",
         "badgeColor": "gold",
@@ -213,7 +217,7 @@ def seed_historical_data(force=False):
                     c_tok = random.randint(600, 1800) if app_info['tier'] == 'Silver' else random.randint(1000, 2600)
                     t_tok = p_tok + c_tok
                     latency_ms = round(random.uniform(2200, 5100), 1)
-                    resp_text = f"Analyzed telemetry for {prompt} with Gemini 2.5 Flash on asia-southeast1."
+                    resp_text = f"Analyzed telemetry for {prompt} with Gemini 3.5 Flash Lite on the Vertex AI global endpoint."
                     err_msg = ""
                 rows_to_insert.append((
                     ts, app_name, app_info['product'], app_info['tier'],
@@ -242,7 +246,7 @@ def seed_historical_data(force=False):
                 c_tok = random.randint(600, 1800) if app_info['tier'] == 'Silver' else random.randint(1000, 2600)
                 t_tok = p_tok + c_tok
                 latency_ms = round(random.uniform(2200, 5100), 1)
-                resp_text = f"Analyzed telemetry for {prompt} with Gemini 2.5 Flash on asia-southeast1."
+                resp_text = f"Analyzed telemetry for {prompt} with Gemini 3.5 Flash Lite on the Vertex AI global endpoint."
                 err_msg = ""
             rows_to_insert.append((
                 ts, app_name, app_info['product'], app_info['tier'],
@@ -262,7 +266,7 @@ def seed_historical_data(force=False):
             c_tok = random.randint(700, 1200)
             t_tok = p_tok + c_tok
             latency_ms = round(random.uniform(2800, 4900), 1)
-            resp_text = f"Analyzed telemetry for {prompt} with Gemini 2.5 Flash on asia-southeast1."
+            resp_text = f"Analyzed telemetry for {prompt} with Gemini 3.5 Flash Lite on the Vertex AI global endpoint."
             err_msg = ""
             rows_to_insert.append((
                 ts, app_name, app_info['product'], app_info['tier'],
@@ -418,8 +422,83 @@ def get_app_rolling_tokens(app_name):
 
         return used, violations, calls, latest_is_429
 
+def simulate_gemini_quota_execution(app_info, prompt_text, start_time):
+    """Simulates realistic Apigee X quota enforcement and Vertex AI Gemini response."""
+    current_used, current_violations, current_calls, latest_is_429 = get_app_rolling_tokens(app_info["name"])
+    quota_limit = app_info["quotaLimit"]
+    window_mins = app_info.get("quotaWindowMinutes", 5)
+
+    # If current rolling window usage has already exceeded quota, trigger HTTP 429
+    if current_used >= quota_limit:
+        latency_ms = round(random.uniform(180, 320), 1)
+        status_code = 429
+        prompt_tokens = 0
+        candidates_tokens = 0
+        total_tokens = 0
+        is_quota_exceeded = True
+        error_message = (
+            f"Quota exceeded for product {app_info['product']} "
+            f"({app_info['tier']} Tier: {quota_limit:,} tokens / {window_mins} mins). "
+            f"Current rolling tokens used: {current_used:,}."
+        )
+        response_text = f"HTTP 429 RESOURCE_EXHAUSTED: policies.ratelimit.QuotaViolation\n{error_message}"
+    else:
+        # Calculate realistic token consumption
+        prompt_tokens = max(18, int(len(prompt_text) / 3.8))
+        lowered = prompt_text.lower()
+        if "heavy" in lowered or "500-word" in lowered or len(prompt_text) > 250:
+            candidates_tokens = random.randint(1400, 2200)
+        elif "medium" in lowered or len(prompt_text) > 80:
+            candidates_tokens = random.randint(480, 850)
+        else:
+            candidates_tokens = random.randint(60, 180)
+
+        total_tokens = prompt_tokens + candidates_tokens
+        latency_ms = round(random.uniform(520, 1100), 1)
+        status_code = 200
+        is_quota_exceeded = False
+        error_message = ""
+
+        # Craft realistic Gemini 3.5 Flash Lite response
+        if "secure" in lowered and "apigee" in lowered:
+            response_text = (
+                "• Declarative Token Quotas: Apigee enforcers track prompt and candidate token counts "
+                f"against product limits ({app_info['tier']} Tier: {quota_limit:,} tokens / {window_mins} mins), "
+                "preventing LLM abuse and unexpected Vertex AI billing bursts.\n"
+                "• Enterprise Telemetry & Attribution: Extracts custom developer-app attributes "
+                "and streams live usage dimensions directly into Apigee Analytics."
+            )
+        elif "5g" in lowered:
+            response_text = (
+                f"5G Network Architecture leverages virtualized RAN and distributed UPF nodes. "
+                f"Requests are governed through Apigee's AI token gateway "
+                f"to guarantee low-latency QoS assurance."
+            )
+        elif "broadcasting" in lowered or "telecommunications" in lowered:
+            response_text = (
+                "### The Centennial Evolution of Telecommunications and Television Broadcasting (1920–2026)\n\n"
+                "#### 1. The Dawn of Electronic Broadcasting (1920s–1940s)\n"
+                "The modern era of telecommunications began with the commercialization of radio in the 1920s (such as KDKA's pioneering 1920 broadcast) and early mechanical television experiments by John Logie Baird and Philo Farnsworth. By the late 1930s, electronic television via cathode ray tubes (CRT) emerged, establishing foundational standards like NTSC and PAL that defined national media distribution for half a century.\n\n"
+                "#### 2. The Transistor, Terrestrial Television, and Satellite Era (1950s–1970s)\n"
+                "The invention of the transistor at Bell Labs in 1947 catalyzed the solid-state revolution. Terrestrial analog television expanded rapidly into living rooms worldwide, transforming public journalism and entertainment. In 1962, the launch of Telstar 1 inaugurated live intercontinental satellite broadcasting, bridging continents with instantaneous voice and video feeds.\n\n"
+                "#### 3. Cellular Networks, Fiber Optics, and Digital Convergence (1980s–2000s)\n"
+                "The late 20th century witnessed the dual transition from analog circuit switching to digital packet-based networking. Dense Wavelength Division Multiplexing (DWDM) optical fiber cables replaced copper coaxial trunks, multiplying transoceanic bandwidth by orders of magnitude. Concurrently, cellular networks evolved from analog 1G voice to 2G digital GSM and 3G mobile data, while High-Definition Television (HDTV) digital standards permanently phased out analog broadcast spectrum.\n\n"
+                "#### 4. The Cloud, 5G, and Streaming Megaplatforms (2010s–2020s)\n"
+                "Between 2010 and 2020, linear broadcast television surrendered hegemony to Over-The-Top (OTT) streaming platforms powered by hyperscale cloud data centers and Content Delivery Networks (CDNs). 4G LTE and 5G New Radio (NR) networks delivered gigabit wireless connectivity, transitioning content distribution from broadcast frequencies to IP unicast streams.\n\n"
+                "#### 5. AI-Native Networks and Unified Media Fabrics (2024–2026)\n"
+                "By 2026, the convergence of telecommunications and generative AI has established intelligent edge computing fabrics. Autonomous radio access networks (OpenRAN) optimize beamforming in real time, while AI gateways like Apigee enforce strict token quotas, rate limiting, and data telemetry to govern high-throughput LLM workloads and multimodal media delivery across millions of smart devices."
+            )
+        else:
+            response_text = (
+                f"Gemini 3.5 Flash Lite (global) completed inference under Apigee {app_info['tier']} Tier governance. "
+                f"Prompt processed ({prompt_tokens} tokens), completion generated ({candidates_tokens} tokens). "
+                f"Usage attributed via Apigee developer-app custom attributes."
+            )
+
+    return status_code, latency_ms, prompt_tokens, candidates_tokens, total_tokens, response_text, is_quota_exceeded, error_message
+
 def execute_apigee_request(app_info, prompt_text):
-    """Sends a request to Apigee gateway, parses tokens, and records to DB."""
+    """Sends a request to Apigee gateway, parses tokens, and records to DB (with realistic simulation fallback)."""
     payload = {
         "contents": [
             {
@@ -434,46 +513,67 @@ def execute_apigee_request(app_info, prompt_text):
     }
 
     start_time = time.time()
-    try:
-        resp = requests.post(
-            GATEWAY_URL,
-            json=payload,
-            headers=headers,
-            verify=False,
-            timeout=45
-        )
-        latency_ms = round((time.time() - start_time) * 1000, 2)
-        status_code = resp.status_code
+    use_simulation = (
+        "YOUR_APIGEE" in GATEWAY_URL or
+        APIGEE_HOST.startswith("YOUR_APIGEE") or
+        os.environ.get("MOCK_MODE", "").lower() in ("true", "1")
+    )
+
+    if not use_simulation:
         try:
-            resp_json = resp.json()
-        except Exception:
-            resp_json = {"raw": resp.text}
-    except Exception as e:
-        latency_ms = round((time.time() - start_time) * 1000, 2)
-        status_code = 500
-        resp_json = {"error": {"message": str(e), "code": 500, "status": "CLIENT_ERROR"}}
+            resp = requests.post(
+                GATEWAY_URL,
+                json=payload,
+                headers=headers,
+                verify=False,
+                timeout=60
+            )
+            latency_ms = round((time.time() - start_time) * 1000, 2)
+            status_code = resp.status_code
+            try:
+                resp_json = resp.json()
+            except Exception:
+                resp_json = {"raw": resp.text}
+
+            if status_code == 200:
+                usage = resp_json.get("usageMetadata", {})
+                prompt_tokens = usage.get("promptTokenCount", 0)
+                candidates_tokens = usage.get("candidatesTokenCount", 0)
+                total_tokens = usage.get("totalTokenCount", prompt_tokens + candidates_tokens)
+                candidates = resp_json.get("candidates", [])
+                response_text = ""
+                if candidates and "content" in candidates[0]:
+                    parts = candidates[0]["content"].get("parts", [])
+                    response_text = "".join([p.get("text", "") for p in parts if "text" in p])
+                if not response_text:
+                    response_text = "Completed inference successfully via Apigee gateway."
+                is_quota_exceeded = False
+                error_message = ""
+            elif status_code == 429:
+                err = resp_json.get("error", {})
+                error_message = err.get("message", "LLM Token Quota limit exceeded for your tier. Please retry after your 5-minute quota window resets.")
+                is_quota_exceeded = True
+                prompt_tokens = 0
+                candidates_tokens = 0
+                total_tokens = 0
+                response_text = f"HTTP 429 RESOURCE_EXHAUSTED: policies.ratelimit.QuotaViolation\n{error_message}"
+            else:
+                err = resp_json.get("error", {})
+                error_message = err.get("message", resp.text if 'resp' in locals() else "Unknown Error")
+                is_quota_exceeded = False
+                prompt_tokens = 0
+                candidates_tokens = 0
+                total_tokens = 0
+                response_text = f"HTTP {status_code}: {error_message}"
+        except Exception as ex:
+            # Fallback to local simulation when live gateway is unresolvable or offline
+            print(f"[WARN] Live Apigee gateway call encountered exception: {ex}. Falling back to simulation.", flush=True)
+            use_simulation = True
+
+    if use_simulation:
+        status_code, latency_ms, prompt_tokens, candidates_tokens, total_tokens, response_text, is_quota_exceeded, error_message = simulate_gemini_quota_execution(app_info, prompt_text, start_time)
 
     now_utc = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-    prompt_tokens = 0
-    candidates_tokens = 0
-    total_tokens = 0
-    response_text = ""
-    is_quota_exceeded = (status_code == 429)
-    error_message = ""
-
-    if status_code == 200:
-        usage = resp_json.get("usageMetadata", {})
-        prompt_tokens = usage.get("promptTokenCount", 0)
-        candidates_tokens = usage.get("candidatesTokenCount", 0)
-        total_tokens = usage.get("totalTokenCount", 0)
-        candidates = resp_json.get("candidates", [])
-        if candidates and "content" in candidates[0] and "parts" in candidates[0]["content"]:
-            response_text = candidates[0]["content"]["parts"][0].get("text", "")
-    else:
-        err = resp_json.get("error", {})
-        error_message = err.get("message", resp.text if 'resp' in locals() else "Unknown Error")
-        if status_code == 429:
-            response_text = f"HTTP 429 Quota Exceeded: {error_message}"
 
     with get_db_connection() as conn:
         cursor = conn.cursor()
@@ -520,6 +620,9 @@ def execute_apigee_request(app_info, prompt_text):
         "isQuotaExceeded": is_quota_exceeded,
         "errorMessage": error_message,
         "error": error_message,
+        "isLiveGateway": not use_simulation,
+        "gatewayHost": APIGEE_HOST,
+        "proxyName": "gemini-token-limit-demo",
         "rollingUsage": {
             "usedTokens": used_tokens,
             "quotaLimit": quota_limit,
@@ -580,7 +683,7 @@ def get_config():
         "gatewayUrl": GATEWAY_URL,
         "org": APIGEE_ORG,
         "env": APIGEE_ENV,
-        "targetModel": "gemini-2.5-flash (asia-southeast1)",
+        "targetModel": "gemini-3.5-flash-lite (global)",
         "apps": apps_list
     })
 
@@ -817,6 +920,7 @@ def get_analytics():
         "bySubDepartment": by_sub_department,
         "timeline": timeline,
         "recentTransactions": recent_txs,
+        "transactions": recent_txs,
         "apigeeCloudStats": apigee_cloud_data
     })
 
@@ -883,6 +987,127 @@ def fetch_apigee_cloud_stats(duration):
             "status": "ERROR",
             "message": str(e)
         }
+
+@app.route("/api/analytics/app-specific", methods=["GET"])
+def get_app_specific_analytics():
+    """Returns granular per-app token consumption analytics."""
+    app_name = request.args.get("appName", "Gemini-Basic-Mfg-SmartTV-App")
+    duration = request.args.get("duration", "1h")
+
+    if app_name not in APPS:
+        app_name = list(APPS.keys())[0]
+
+    now = datetime.datetime.utcnow()
+    durations_map = {
+        "1h": datetime.timedelta(hours=1),
+        "1d": datetime.timedelta(days=1),
+        "3d": datetime.timedelta(days=3),
+        "7d": datetime.timedelta(days=7)
+    }
+    delta = durations_map.get(duration, datetime.timedelta(hours=1))
+    start_time = (now - delta).strftime('%Y-%m-%d %H:%M:%S')
+
+    app_info = APPS[app_name]
+    quota_limit = app_info["quotaLimit"]
+
+    # Rolling usage for selected app
+    used_tokens, violations, calls, latest_is_429 = get_app_rolling_tokens(app_name)
+    is_exhausted = latest_is_429 or (used_tokens >= quota_limit) or (violations > 0)
+    remaining_tokens = 0 if is_exhausted else max(0, quota_limit - used_tokens)
+    pct_used = 100.0 if is_exhausted else round(min(100.0, (used_tokens / quota_limit) * 100), 1)
+
+    rolling_usage = {
+        "usedTokens": used_tokens,
+        "quotaLimit": quota_limit,
+        "remainingTokens": remaining_tokens,
+        "percentageUsed": pct_used,
+        "violations": violations,
+        "calls": calls,
+        "status": "EXHAUSTED" if is_exhausted else "ACTIVE",
+        "isExhausted": is_exhausted
+    }
+
+    # Summary of all 4 apps for top switcher
+    all_apps_summary = []
+    for k, v in APPS.items():
+        u_tok, v_viol, c_calls, is_429 = get_app_rolling_tokens(k)
+        all_apps_summary.append({
+            "name": k,
+            "displayName": v["displayName"],
+            "tier": v["tier"],
+            "department": v["department"],
+            "subDepartment": v["subDepartment"],
+            "quotaLimit": v["quotaLimit"],
+            "quotaWindowMinutes": v["quotaWindowMinutes"],
+            "badgeColor": v["badgeColor"],
+            "role": v["role"],
+            "description": v["description"],
+            "rollingUsedTokens": u_tok,
+            "isExhausted": is_429 or (u_tok >= v["quotaLimit"])
+        })
+
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+
+        # KPIs for this app in the window
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total_requests,
+                COUNT(CASE WHEN status_code = 200 THEN 1 END) as success_requests,
+                COUNT(CASE WHEN status_code = 429 THEN 1 END) as quota_violations,
+                COALESCE(SUM(total_tokens), 0) as total_tokens,
+                COALESCE(SUM(prompt_tokens), 0) as prompt_tokens,
+                COALESCE(SUM(candidates_tokens), 0) as candidates_tokens,
+                COALESCE(AVG(CASE WHEN status_code = 200 THEN latency_ms END), 0) as avg_latency_ms
+            FROM transactions
+            WHERE app_name = ? AND timestamp >= ?
+        """, (app_name, start_time))
+        kpis = dict(cursor.fetchone())
+        total_reqs = kpis["total_requests"]
+        kpis["quota_violation_rate"] = round((kpis["quota_violations"] / total_reqs * 100), 1) if total_reqs > 0 else 0
+        kpis["avg_latency_ms"] = round(kpis["avg_latency_ms"], 1)
+
+        # Timeline rows for this app
+        cursor.execute("""
+            SELECT timestamp, status_code, total_tokens
+            FROM transactions
+            WHERE app_name = ? AND timestamp >= ?
+            ORDER BY timestamp ASC
+        """, (app_name, start_time))
+        timeline_rows = [dict(row) for row in cursor.fetchall()]
+        timeline = generate_timeline(timeline_rows, duration, now)
+
+        # Recent transactions for this app
+        cursor.execute("""
+            SELECT id, timestamp, prompt, status_code, prompt_tokens, candidates_tokens, total_tokens, latency_ms, is_quota_exceeded
+            FROM transactions
+            WHERE app_name = ? AND timestamp >= ?
+            ORDER BY timestamp DESC, id DESC
+            LIMIT 50
+        """, (app_name, start_time))
+        recent_txs = [dict(row) for row in cursor.fetchall()]
+
+    return jsonify({
+        "app": {
+            "name": app_name,
+            "displayName": app_info["displayName"],
+            "tier": app_info["tier"],
+            "department": app_info["department"],
+            "subDepartment": app_info["subDepartment"],
+            "badgeColor": app_info["badgeColor"],
+            "role": app_info["role"],
+            "description": app_info["description"],
+            "quotaLimit": quota_limit,
+            "quotaWindowMinutes": app_info["quotaWindowMinutes"],
+            "apiKeyMasked": app_info["apiKey"][:6] + "..." + app_info["apiKey"][-4:]
+        },
+        "duration": duration,
+        "allApps": all_apps_summary,
+        "rollingUsage": rolling_usage,
+        "consumption": kpis,
+        "timeline": timeline,
+        "recentTransactions": recent_txs
+    })
 
 @app.route("/api/reset-session", methods=["POST"])
 def reset_session():

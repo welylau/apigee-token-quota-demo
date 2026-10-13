@@ -56,21 +56,7 @@
         "llmOperations": [
           {
             "resource": "/",
-            "model": "gemini-2.5-flash"
-          }
-        ],
-        "llmTokenQuota": {
-          "limit": "40000",
-          "interval": "5",
-          "timeUnit": "minute"
-        }
-      },
-      {
-        "apiSource": "gemini-token-limit-demo",
-        "llmOperations": [
-          {
-            "resource": "/",
-            "model": "gemini-2.5-flash-lite"
+            "model": "gemini-3.5-flash-lite"
           }
         ],
         "llmTokenQuota": {
@@ -84,21 +70,7 @@
         "llmOperations": [
           {
             "resource": "/**",
-            "model": "gemini-2.5-flash"
-          }
-        ],
-        "llmTokenQuota": {
-          "limit": "40000",
-          "interval": "5",
-          "timeUnit": "minute"
-        }
-      },
-      {
-        "apiSource": "gemini-token-limit-demo",
-        "llmOperations": [
-          {
-            "resource": "/**",
-            "model": "gemini-2.5-flash-lite"
+            "model": "gemini-3.5-flash-lite"
           }
         ],
         "llmTokenQuota": {
