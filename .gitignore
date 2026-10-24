@@ -34,3 +34,6 @@ web-ui/data/*.sqlite
 *.swp
 *.swo
 *~
+
+# Local demo walkthrough recordings (not published)
+/videos/
